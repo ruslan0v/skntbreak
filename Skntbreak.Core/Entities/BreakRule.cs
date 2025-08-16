@@ -13,5 +13,6 @@ namespace Skntbreak.Core.Entities
         public BreakType Type { get; set; }
         public int MaxCount {  get; set; }
         public int ScheduleId {  get; set; }
+        public Schedule? Schedule {  get; set; }
     }
 }

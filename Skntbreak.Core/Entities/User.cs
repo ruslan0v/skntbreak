@@ -14,9 +14,11 @@ namespace Skntbreak.Core.Entities
         public string Login { get; set; } = null!;
         public string PasswordHash { get; set; } = string.Empty;
         public RoleType Role { get; set; }
-        public bool IsActive { get; set; } = true;
-
         public int? ScheduleId {  get; set; }
         public Schedule? Schedule { get; set; }
+
+        public ICollection<Break> Breaks { get; set; }
+        public ICollection<BreakChat> BreakChats { get; set; }
+
     }
 }

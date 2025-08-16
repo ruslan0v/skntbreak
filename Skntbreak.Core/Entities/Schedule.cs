@@ -12,8 +12,7 @@ namespace Skntbreak.Core.Entities
         public string Name { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-
-
-        public List<BreakRule> BreakRules { get; set; } = new();
+        public ICollection<User> Users { get; set; }
+        public ICollection<BreakRule> BreakRules { get; set; }
     }
 }

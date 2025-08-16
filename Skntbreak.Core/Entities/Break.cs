@@ -7,7 +7,7 @@ using Skntbreak.Core.Enums;
 
 namespace Skntbreak.Core.Entities
 {
-    public class ActiveBreak
+    public class Break
     {
         public int Id { get; set; }
         public int UserId { get; set; }
