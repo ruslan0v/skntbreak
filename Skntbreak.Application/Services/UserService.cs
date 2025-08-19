@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace Skntbreak.Application.Services
 {
-    internal class UserService
+    public class UserService : 
     {
+
     }
 }
