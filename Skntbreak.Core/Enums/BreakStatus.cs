@@ -8,7 +8,9 @@ namespace Skntbreak.Core.Enums
 {
     public enum BreakStatus
     {
-        AtPlace,
-        OnBreak
+        Available,
+        Taken,
+        Finished,
+        Skipped
     }
 }

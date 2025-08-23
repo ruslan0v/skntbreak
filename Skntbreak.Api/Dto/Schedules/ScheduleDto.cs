@@ -2,6 +2,11 @@
 {
     public class ScheduleDto
     {
+        public ScheduleDto()
+        {
+            BreakRules = new List<BreakRuleDto>();
+        }
+
         public int Id { get; set; }
         public string Name { get; set; }
         public TimeSpan StartTime { get; set; }

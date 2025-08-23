@@ -6,12 +6,9 @@ using System.Threading.Tasks;
 
 namespace Skntbreak.Core.Enums
 {
-    public enum BreakType
+    public enum ShiftType
     {
-        First,
-        Second,
-        Third,
-        Fourth,
-        Any
+        Day,
+        Evening
     }
 }

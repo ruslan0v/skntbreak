@@ -17,8 +17,8 @@ namespace Skntbreak.Core.Entities
         public int? ScheduleId {  get; set; }
         public Schedule? Schedule { get; set; }
 
-        public ICollection<Break> Breaks { get; set; }
-        public ICollection<BreakChat> BreakChats { get; set; }
+        public ICollection<Break> Breaks { get; set; } = new List<Break>();
+        public ICollection<BreakChat> BreakChats { get; set; } = new List<BreakChat>();
 
     }
 }

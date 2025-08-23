@@ -11,7 +11,8 @@ namespace Skntbreak.Core.Entities
     {
         public int Id { get; set; }
         public BreakType Type { get; set; }
-        public int MaxCount {  get; set; }
+        public string AllowedDurations { get; set; } = "[]";
+        public int MinIntervalMinutes {  get; set; }
         public int ScheduleId {  get; set; }
         public Schedule? Schedule {  get; set; }
     }

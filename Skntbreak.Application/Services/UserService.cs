@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 
 namespace Skntbreak.Application.Services
 {
-    public class UserService : 
+    public class UserService 
     {
-
+        public async Task<IEnumerable<User>> GetUsers()
+        {
+            return await Task.FromResult(new List<User>());
+        }
     }
 }
