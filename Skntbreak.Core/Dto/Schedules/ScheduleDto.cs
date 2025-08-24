@@ -1,4 +1,4 @@
-﻿namespace Skntbreak.Api.Dto.Schedules
+﻿namespace Skntbreak.Core.Dto.Schedules
 {
     public class ScheduleDto
     {

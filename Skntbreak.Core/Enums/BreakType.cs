@@ -11,7 +11,6 @@ namespace Skntbreak.Core.Enums
         First,
         Second,
         Third,
-        Fourth,
-        Any
+        Fourth
     }
 }

@@ -20,29 +20,31 @@ namespace Skntbreak.Infrastructure.Data.Repositories
             _context = context;
         }
 
-        public async Task<BreakRule?> GetByIdAsync(int id)
-        {
-            return await _context.BreakRules
-                .AsNoTracking()
-                .FirstOrDefaultAsync(br => br.Id == id);
-        }
-        public async Task<IEnumerable<BreakRule>> GetAllAsync()
-        {
-            return await _context.BreakRules
-                .AsNoTracking()
-                .OrderBy(br => br.Id)
-                .ToListAsync();
-        }
-        public async Task<IEnumerable<BreakRule>> GetByScheduleAsync(int scheduleId)
+        public async Task<ShiftBreakTemplate?> GetByIdAsync(int id)
         {
             return await _context.BreakRules
                 .Include(br => br.Schedule)
                 .AsNoTracking()
+                .FirstOrDefaultAsync(br => br.Id == id);
+        }
+        public async Task<IEnumerable<ShiftBreakTemplate>> GetAllAsync()
+        {
+            return await _context.BreakRules
+                .AsNoTracking()
+                .OrderBy(br => br.Type)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<ShiftBreakTemplate>> GetByScheduleAsync(int scheduleId)
+        {
+            return await _context.BreakRules
+                .Include(br => br.Schedule)
+                .AsNoTracking()
+                .Where(br => br.ScheduleId == scheduleId)
                 .OrderBy(br => br.Id)
                 .ToListAsync();
         }
 
-        public async Task<BreakRule> AddAsync(BreakRule breakRule)
+        public async Task<ShiftBreakTemplate> AddAsync(ShiftBreakTemplate breakRule)
         {
             if (breakRule.ScheduleId <= 0)
                 throw new ArgumentException("Поле с ScheduleId не может быть пустым");
@@ -56,7 +58,7 @@ namespace Skntbreak.Infrastructure.Data.Repositories
             return breakRule;
         }
 
-        public async Task UpdateAsync(BreakRule breakRule)
+        public async Task UpdateAsync(ShiftBreakTemplate breakRule)
         {
             var breakRuleEntity = await _context.BreakRules.FindAsync(breakRule.Id);
             if (breakRuleEntity == null)
@@ -88,7 +90,8 @@ namespace Skntbreak.Infrastructure.Data.Repositories
             }
 
             var activeBreaks = await _context.Breaks
-                .AnyAsync(b => b.User.ScheduleId == breakRule.ScheduleId && b.Type == breakRule.Type && b.Status == BreakStatus.OnBreak);
+                .Include(b => b.User)
+                .AnyAsync(b => b.User.ScheduleId == breakRule.ScheduleId && b.Type == breakRule.Type && b.Status == BreakStatus.Taken);
 
             if (activeBreaks)
             {
@@ -97,6 +100,12 @@ namespace Skntbreak.Infrastructure.Data.Repositories
 
             _context.BreakRules.Remove(breakRule);
             await _context.SaveChangesAsync();
+        }
+        public async Task<ShiftBreakTemplate?> GetByTypeAndScheduleAsync(BreakType type, int scheduleId)
+        {
+            return await _context.BreakRules
+                .AsNoTracking()
+                .FirstOrDefaultAsync(br => br.Type == type && br.ScheduleId == scheduleId);
         }
     }
 }

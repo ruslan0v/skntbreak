@@ -1,6 +1,6 @@
 ﻿using Skntbreak.Core.Enums;
 
-namespace Skntbreak.Api.Dto.Users
+namespace Skntbreak.Core.Dto.Users
 {
     public class UserDto
     {

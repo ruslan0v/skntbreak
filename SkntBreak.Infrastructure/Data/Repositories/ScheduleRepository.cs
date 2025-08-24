@@ -42,6 +42,14 @@ namespace SkntBreak.Infrastructure.Data.Repositories
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
+        public async Task<Schedule?> GetWithUsersAsync(int id)
+        {
+            return await _context.Schedules
+                .Include(s => s.Users)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == id);
+        }
+
         public async Task<Schedule> AddAsync(Schedule schedule)
         {
             if (string.IsNullOrWhiteSpace(schedule.Name))

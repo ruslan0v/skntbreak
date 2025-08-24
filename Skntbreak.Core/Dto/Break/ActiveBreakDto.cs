@@ -1,6 +1,6 @@
 ﻿using Skntbreak.Core.Enums;
 
-namespace Skntbreak.Api.Dto.Break
+namespace Skntbreak.Core.Dto.Break
 {
     public class ActiveBreakDto
     {

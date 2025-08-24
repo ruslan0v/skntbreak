@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skntbreak.Api", "Skntbreak.Api.csproj", "{E6809EED-5281-406C-A862-7E26FB3CA841}"
+	ProjectSection(ProjectDependencies) = postProject
+		{81D27D44-75F7-4900-9D8F-06F1BC633818} = {81D27D44-75F7-4900-9D8F-06F1BC633818}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skntbreak.Core", "..\Skntbreak.Core\Skntbreak.Core.csproj", "{7F4B9002-23FF-4140-A298-28FC5EE92D20}"
 EndProject

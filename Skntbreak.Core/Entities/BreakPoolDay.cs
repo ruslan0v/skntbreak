@@ -11,7 +11,9 @@ namespace Skntbreak.Core.Entities
     {
         public int Id { get; set; }
         public ShiftType Group { get; set; }
-        public DateOnly WorkDate {  get; set; }
-        public int MaxCurrentBreaks { get; set; }
+        public DateOnly WorkDate { get; set; }
+
+        public int TotalBreaks { get; set; }       // всего разрешено
+        public int AvailableBreaks { get; set; }   // сколько осталось
     }
 }

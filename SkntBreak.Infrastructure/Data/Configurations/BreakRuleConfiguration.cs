@@ -9,21 +9,26 @@ using Skntbreak.Core.Entities;
 
 namespace SkntBreak.Infrastructure.Data.Configurations
 {
-    public class BreakRuleConfiguration : IEntityTypeConfiguration<BreakRule>
+    public class BreakRuleConfiguration : IEntityTypeConfiguration<ShiftBreakTemplate>
     {
-        public void Configure(EntityTypeBuilder<BreakRule> builder)
+        public void Configure(EntityTypeBuilder<ShiftBreakTemplate> builder)
         {
             builder.HasKey(br => br.Id);
 
             builder.Property(br => br.Type)
                 .IsRequired();
 
-            builder.Property(br => br.MaxCount)
+            builder.Property(br => br.AllowedDurations)
+                .IsRequired()
+                .HasDefaultValue("[]");
+
+            builder.Property(br => br.MinIntervalMinutes)
                 .IsRequired();
 
             builder.HasOne(br => br.Schedule)
                     .WithMany(s => s.BreakRules)
-                    .HasForeignKey(br => br.ScheduleId);
+                    .HasForeignKey(br => br.ScheduleId)
+                    .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

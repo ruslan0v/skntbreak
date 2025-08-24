@@ -12,6 +12,7 @@ namespace Skntbreak.Application.Interfaces
         Task<Schedule?> GetByIdAsync(int id);
         Task<IEnumerable<Schedule>> GetAllAsync();
         Task<Schedule?> GetWithRulesAsync(int id);
+        Task<Schedule?> GetWithUsersAsync(int id);
 
         Task<Schedule> AddAsync(Schedule schedule);
         Task UpdateAsync(Schedule schedule);

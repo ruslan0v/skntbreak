@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Skntbreak.Core.Entities;
+using Skntbreak.Core.Enums;
 
 namespace Skntbreak.Core.Interfaces
 {
@@ -11,12 +12,13 @@ namespace Skntbreak.Core.Interfaces
     {
         public interface IBreakRuleRepository
         {
-            Task<BreakRule?> GetByIdAsync(int id);
-            Task<IEnumerable<BreakRule>> GetAllAsync();
-            Task<IEnumerable<BreakRule>> GetByScheduleAsync(int scheduleId);
+            Task<ShiftBreakTemplate?> GetByIdAsync(int id);
+            Task<IEnumerable<ShiftBreakTemplate>> GetAllAsync();
+            Task<IEnumerable<ShiftBreakTemplate>> GetByScheduleAsync(int scheduleId);
+            Task<ShiftBreakTemplate?> GetByTypeAndScheduleAsync(BreakType type, int scheduleId);
 
-            Task<BreakRule> AddAsync(BreakRule rule);
-            Task UpdateAsync(BreakRule rule);
+            Task<ShiftBreakTemplate> AddAsync(ShiftBreakTemplate rule);
+            Task UpdateAsync(ShiftBreakTemplate rule);
             Task DeleteAsync(int id);
         }
     }

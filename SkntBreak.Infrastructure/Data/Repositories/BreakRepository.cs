@@ -21,12 +21,14 @@ namespace SkntBreak.Infrastructure.Data.Repositories
         public async Task<Break?> GetByIdAsync(int id)
         {
             return await _context.Breaks
+                .Include(b => b.User)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
         public async Task<IEnumerable<Break>> GetAllAsync()
         {
             return await _context.Breaks
+                .Include(b => b.User)
                 .AsNoTracking()
                 .OrderBy(b => b.Id)
                 .ToListAsync();
@@ -36,7 +38,7 @@ namespace SkntBreak.Infrastructure.Data.Repositories
             return await _context.Breaks
                 .Include(b => b.User)
                 .AsNoTracking()
-                .Where(b => b.UserId == userId && b.Status == BreakStatus.OnBreak)
+                .Where(b => b.UserId == userId && b.Status == BreakStatus.Taken)
                 .OrderByDescending(b => b.StartTime)
                 .ToListAsync();
         }
@@ -45,7 +47,7 @@ namespace SkntBreak.Infrastructure.Data.Repositories
             return await _context.Breaks
                 .Include(b => b.User)
                 .AsNoTracking()
-                .Where(b => b.User.ScheduleId == scheduleId && b.Status == BreakStatus.OnBreak)
+                .Where(b => b.User.ScheduleId == scheduleId && b.Status == BreakStatus.Taken)
                 .OrderByDescending(b => b.StartTime)
                 .ToListAsync();
         }
@@ -54,7 +56,7 @@ namespace SkntBreak.Infrastructure.Data.Repositories
             if (brk.UserId <= 0)
                 throw new ArgumentException("Поле с UserId не может быть пустым");
 
-            if (await _context.Breaks.AnyAsync(b => b.UserId == brk.UserId && b.Status == BreakStatus.OnBreak))
+            if (await _context.Breaks.AnyAsync(b => b.UserId == brk.UserId && b.Status == BreakStatus.Taken))
                 throw new InvalidOperationException($"У пользователя с Id '{brk.UserId}' уже есть активный перерыв");
 
             await _context.Breaks.AddAsync(brk);
@@ -71,9 +73,9 @@ namespace SkntBreak.Infrastructure.Data.Repositories
                 throw new InvalidOperationException($"Перерыв с Id - {brk.Id} не найден");
             }
 
-            if (brk.Status == BreakStatus.OnBreak && breakEntity.Status != BreakStatus.OnBreak)
+            if (brk.Status == BreakStatus.Taken && breakEntity.Status != BreakStatus.Taken)
             {
-                if (await _context.Breaks.AnyAsync(b => b.UserId == brk.UserId && b.Status == BreakStatus.OnBreak && b.Id != brk.Id))
+                if (await _context.Breaks.AnyAsync(b => b.UserId == brk.UserId && b.Status == BreakStatus.Taken && b.Id != brk.Id))
                 {
                     throw new InvalidOperationException($"У пользователя с Id '{brk.UserId}' уже есть активный перерыв");
                 }
@@ -94,7 +96,7 @@ namespace SkntBreak.Infrastructure.Data.Repositories
                 throw new InvalidOperationException($"Перерыв с данным Id - {id} не найден");
             }
 
-            if (brk.Status == BreakStatus.OnBreak)
+            if (brk.Status == BreakStatus.Taken)
             {
                 throw new InvalidOperationException($"Нельзя удалить активный перерыв");
             }
