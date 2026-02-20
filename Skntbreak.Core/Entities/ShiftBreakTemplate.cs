@@ -13,7 +13,7 @@ namespace Skntbreak.Core.Entities
         public int ScheduleId { get; set; }
         public Schedule? Schedule { get; set; }
 
-        public int Order {  get; set; } // (1,2,3) - порядковый номер
+        public int Order { get; set; } // (1,2,3) - порядковый номер
         public int DurationMinutes { get; set; } // 10 чи 20
     }
 }

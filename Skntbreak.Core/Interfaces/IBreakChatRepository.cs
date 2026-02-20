@@ -12,7 +12,6 @@ namespace Skntbreak.Application.Interfaces
         Task<BreakChat?> GetByIdAsync(int id);
         Task<IEnumerable<BreakChat>> GetAllAsync();
         Task<IEnumerable<BreakChat>> GetByUserAsync(int userId);
-        Task<IEnumerable<BreakChat>> GetByScheduleAsync(int scheduleId, DateTime date);
 
         Task<BreakChat> AddAsync(BreakChat chatBreak);
         Task UpdateAsync(BreakChat chatBreak);

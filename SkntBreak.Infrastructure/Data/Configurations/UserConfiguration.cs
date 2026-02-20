@@ -27,21 +27,18 @@ namespace SkntBreak.Infrastructure.Data.Configurations
                 .IsRequired()
                 .HasMaxLength(255);
 
-            builder.HasOne(u => u.Schedule)
-               .WithMany(s => s.Users)
-               .HasForeignKey(u => u.ScheduleId)
-               .OnDelete(DeleteBehavior.Restrict);
+            builder.Property(u => u.Role)
+                .IsRequired();
 
-            builder.HasMany(u => u.Breaks)
-                .WithOne(b => b.User)
-                .HasForeignKey(b => b.UserId)
+            builder.HasMany(u => u.UserShifts)
+                .WithOne(us => us.User)
+                .HasForeignKey(us => us.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasMany(u => u.BreakChats)
-                .WithOne(bs => bs.User)
-                .HasForeignKey(bs => bs.UserId)
+                .WithOne(bc => bc.User)
+                .HasForeignKey(bc => bc.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
-

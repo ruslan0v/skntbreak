@@ -15,7 +15,10 @@ namespace SkntBreak.Infrastructure.Data.Configurations
         {
             builder.HasKey(bc => bc.Id);
 
-            builder.Property(bc => bc.Type)
+            builder.Property(bc => bc.BreakNumber)
+                .IsRequired();
+
+            builder.Property(bc => bc.IsReserved)
                 .IsRequired();
 
             builder.HasOne(bc => bc.User)

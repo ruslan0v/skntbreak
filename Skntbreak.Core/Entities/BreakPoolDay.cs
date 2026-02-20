@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Skntbreak.Core.Enums;
+﻿using Skntbreak.Core.Enums;
 
-namespace Skntbreak.Core.Entities
+public class BreakPoolDay
 {
-    public class BreakPoolDay
-    {
-        public int Id { get; set; }
-        public ShiftType Group { get; set; }
-        public DateOnly WorkDate { get; set; }
+    public int Id { get; set; }
+    public ShiftType Group { get; set; }
+    public DateOnly WorkDate { get; set; }
+    public int TotalBreaks { get; set; }       // макс одновременно
+    public int AvailableBreaks { get; set; }   // сколько ещё можно
 
-        public int TotalBreaks { get; set; }       // всего разрешено
-        public int AvailableBreaks { get; set; }   // сколько осталось
-    }
+    // НОВОЕ: для графика 18-02 — лимиты по типам перерывов
+    public int? Total10MinBreaks { get; set; }     // null = не 18-02
+    public int? Remaining10MinBreaks { get; set; }
+    public int? Total20MinBreaks { get; set; }
+    public int? Remaining20MinBreaks { get; set; }
 }

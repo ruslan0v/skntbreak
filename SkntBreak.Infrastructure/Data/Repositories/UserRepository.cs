@@ -22,14 +22,17 @@ namespace SkntBreak.Infrastructure.Data.Repositories
         public async Task<User?> GetByIdAsync(int id)
         {
             return await _context.Users
-                .Include(u => u.Schedule)
+                .Include(u => u.UserShifts)
+                    .ThenInclude(us => us.Schedule)
+                .Include(u => u.BreakChats)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
         public async Task<IEnumerable<User>> GetAllAsync()
         {
             return await _context.Users
-                .Include(u => u.Schedule)
+                .Include(u => u.UserShifts)
+                    .ThenInclude(us => us.Schedule)
                 .AsNoTracking()
                 .OrderBy(u => u.UserName)
                 .ToListAsync();
@@ -41,7 +44,8 @@ namespace SkntBreak.Infrastructure.Data.Repositories
                 throw new ArgumentException("Логин не может быть пустым");
             
             return await _context.Users
-                .Include(u => u.Schedule)
+                .Include(u => u.UserShifts)
+                    .ThenInclude(us => us.Schedule)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Login == login);
         }
@@ -49,9 +53,10 @@ namespace SkntBreak.Infrastructure.Data.Repositories
         public async Task<IEnumerable<User>> GetByScheduleAsync(int scheduleId)
         {
             return await _context.Users
-                .Include(u => u.Schedule)
+                .Include(u => u.UserShifts)
+                    .ThenInclude(us => us.Schedule)
                 .AsNoTracking()
-                .Where(u => u.ScheduleId == scheduleId)
+                .Where(u => u.UserShifts.Any(us => us.ScheduleId == scheduleId))
                 .ToListAsync();
         }
 
@@ -92,7 +97,8 @@ namespace SkntBreak.Infrastructure.Data.Repositories
         public async Task DeleteAsync(int id)
         {
             var user = await _context.Users
-                .Include(u => u.Breaks)
+                .Include(u => u.UserShifts)
+                    .ThenInclude(us => us.Breaks)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
@@ -100,7 +106,10 @@ namespace SkntBreak.Infrastructure.Data.Repositories
                 throw new InvalidOperationException($"Пользователь с данным Id - {id} не найден");
             }
 
-            var activeBreak = user.Breaks?.FirstOrDefault(b => b.Status == BreakStatus.Taken);
+            var activeBreak = user.UserShifts
+                .SelectMany(us => us.Breaks)
+                .FirstOrDefault(b => b.Status == BreakStatus.Taken);
+            
             if (activeBreak != null)
             {
                 throw new InvalidOperationException($"Нельзя удалить пользователя с активным перерывом");
@@ -108,6 +117,20 @@ namespace SkntBreak.Infrastructure.Data.Repositories
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
+        }
+        public async Task<IEnumerable<User>> GetAllWithShiftsAndBreaksAsync()
+        {
+            return await _context.Users
+                .Include(u => u.UserShifts)
+                .ThenInclude(s => s.Breaks)
+                .ToListAsync();
+        }
+        public async Task<User?> GetByIdWithShiftsAndBreaksAsync(int userId)
+        {
+            return await _context.Users
+                .Include(u => u.UserShifts)
+                    .ThenInclude(s => s.Breaks)
+                .FirstOrDefaultAsync(u => u.Id == userId);
         }
     }
 }

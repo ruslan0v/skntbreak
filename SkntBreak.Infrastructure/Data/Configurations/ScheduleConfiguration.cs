@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Skntbreak.Core.Entities;
 
@@ -25,13 +20,15 @@ namespace SkntBreak.Infrastructure.Data.Configurations
             builder.Property(s => s.EndTime)
                 .IsRequired();
 
-            builder.HasMany(s => s.BreakRules)
-                .WithOne(br => br.Schedule)
-                .HasForeignKey(br => br.ScheduleId);
+            builder.HasMany(s => s.UserShifts)
+                .WithOne(us => us.Schedule)
+                .HasForeignKey(us => us.ScheduleId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasMany(s => s.Users)
-                .WithOne(u => u.Schedule)
-                .HasForeignKey(u => u.ScheduleId);
+            builder.HasMany(s => s.BreakTemplates)
+                .WithOne(bt => bt.Schedule)
+                .HasForeignKey(bt => bt.ScheduleId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

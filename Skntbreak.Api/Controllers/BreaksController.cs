@@ -1,63 +1,151 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Skntbreak.Core.Dto.Break;
+using Skntbreak.Core.Interfaces;
 
 namespace Skntbreak.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class BreaksController : ControllerBase
     {
-        private static readonly List<BreakDto> ActiveBreaks = new List<BreakDto>();
-        private static int _idCounter = 1;
+        private readonly IBreakService _breakService;
 
-        public class BreakDto
+        public BreaksController(IBreakService breakService)
         {
-            public int Id { get; set; }
-            public int UserId { get; set; }
-            public string UserName { get; set; }
-            public string LengthType { get; set; } // "10min" или "20min"
-            public DateTime StartTime { get; set; }
-            public DateTime? EndTime { get; set; }
+            _breakService = breakService;
         }
 
-        // POST /api/breaks/start
+        // Взять перерыв
         [HttpPost("start")]
-        public IActionResult StartBreak(int userId, string userName, string lengthType)
+        public async Task<IActionResult> StartBreak([FromBody] StartBreakDto request)
         {
-            var newBreak = new BreakDto
+            var userId = GetCurrentUserId();
+            try
             {
-                Id = _idCounter++,
-                UserId = userId,
-                UserName = userName,
-                LengthType = lengthType,
-                StartTime = DateTime.UtcNow
-            };
-
-            ActiveBreaks.Add(newBreak);
-            return Ok(newBreak);
+                var activeBreak = await _breakService.StartBreakAsync(request, userId);
+                return Ok(activeBreak);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
-        // POST /api/breaks/end
-        [HttpPost("end")]
-        public IActionResult EndBreak(int breakId)
+        // Завершить свой активный перерыв
+        [HttpPost("end/{breakId}")]
+        public async Task<IActionResult> EndBreak(int breakId)
         {
-            var br = ActiveBreaks.FirstOrDefault(b => b.Id == breakId);
-            if (br == null)
-                return NotFound("Break not found");
-
-            br.EndTime = DateTime.UtcNow;
-            ActiveBreaks.Remove(br);
-
-            return Ok(br);
+            try
+            {
+                var userId = GetCurrentUserId();
+                var endedBreak = await _breakService.EndBreakAsync(breakId, userId);
+                return Ok(endedBreak);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
-        // GET /api/breaks/active
-        [HttpGet("active")]
-        public IActionResult GetActiveBreaks()
+        // Пропустить перерыв
+        [HttpPost("skip")]
+        public async Task<IActionResult> SkipBreak([FromBody] SkipBreakDto request)
         {
-            return Ok(ActiveBreaks);
+            var userId = GetCurrentUserId();
+            try
+            {
+                var skippedBreak = await _breakService.SkipBreakAsync(request, userId);
+                return Ok(skippedBreak);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // НОВОЕ: Получить свой активный перерыв
+        [HttpGet("my-active")]
+        public async Task<IActionResult> GetMyActiveBreak()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var activeBreak = await _breakService.GetUserActiveBreakAsync(userId);
+
+                if (activeBreak == null)
+                    return Ok(new { hasActiveBreak = false });
+
+                return Ok(new { hasActiveBreak = true, breakData = activeBreak });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // НОВОЕ: Получить все активные перерывы в моей смене
+        [HttpGet("active-in-shift")]
+        public async Task<IActionResult> GetActiveBreaksInMyShift([FromQuery] string date)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var workDate = DateOnly.Parse(date);
+
+                var allActiveBreaks = await _breakService.GetActiveBreaksByDateAsync(workDate, userId);
+                return Ok(allActiveBreaks);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // НОВОЕ: История перерывов пользователя
+        [HttpGet("my-history")]
+        public async Task<IActionResult> GetMyBreakHistory([FromQuery] string date)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var workDate = DateOnly.Parse(date);
+                var history = await _breakService.GetUserBreakHistoryAsync(userId, workDate);
+                return Ok(history);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst("userId")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                throw new UnauthorizedAccessException("Пользователь не авторизован");
+            return userId;
+        }
+
+        [HttpGet("pool-info")]
+        public async Task<IActionResult> GetBreakPoolInfo([FromQuery] string date)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var workDate = DateOnly.Parse(date);
+
+                var poolInfo = await _breakService.GetBreakPoolInfoAsync(workDate, userId);
+                return Ok(poolInfo);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
     }
 }

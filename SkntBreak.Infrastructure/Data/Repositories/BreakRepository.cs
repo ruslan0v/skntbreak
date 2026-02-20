@@ -21,14 +21,20 @@ namespace SkntBreak.Infrastructure.Data.Repositories
         public async Task<Break?> GetByIdAsync(int id)
         {
             return await _context.Breaks
-                .Include(b => b.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.Schedule)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
         public async Task<IEnumerable<Break>> GetAllAsync()
         {
             return await _context.Breaks
-                .Include(b => b.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.Schedule)
                 .AsNoTracking()
                 .OrderBy(b => b.Id)
                 .ToListAsync();
@@ -36,28 +42,107 @@ namespace SkntBreak.Infrastructure.Data.Repositories
         public async Task<IEnumerable<Break>> GetActiveBreaksByUserAsync(int userId)
         {
             return await _context.Breaks
-                .Include(b => b.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.Schedule)
                 .AsNoTracking()
-                .Where(b => b.UserId == userId && b.Status == BreakStatus.Taken)
+                .Where(b => b.UserShift.UserId == userId && b.Status == BreakStatus.Taken)
                 .OrderByDescending(b => b.StartTime)
                 .ToListAsync();
+        }
+        public async Task<Break> GetActiveBreakByUserAsync(int userId)
+        {
+            return await _context.Breaks
+                .Include(b => b.UserShift)
+                .ThenInclude(us => us.User)
+                .AsNoTracking()
+                .Where(b => b.UserShift.UserId == userId && b.Status == BreakStatus.Taken)
+                .FirstOrDefaultAsync();
         }
         public async Task<IEnumerable<Break>> GetActiveBreaksByScheduleAsync(int scheduleId)
         {
             return await _context.Breaks
-                .Include(b => b.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.Schedule)
                 .AsNoTracking()
-                .Where(b => b.User.ScheduleId == scheduleId && b.Status == BreakStatus.Taken)
+                .Where(b => b.UserShift.ScheduleId == scheduleId && b.Status == BreakStatus.Taken)
                 .OrderByDescending(b => b.StartTime)
                 .ToListAsync();
         }
+        public async Task<Break?> GetAvailableBreakAsync(int userShiftId)
+        {
+            return await _context.Breaks
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.Schedule)
+                .Where(b => b.UserShiftId == userShiftId && b.Status == BreakStatus.Available)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+        }
+        public async Task<Break?> GetNextAvailableBreakByUserAsync(int userId)
+        {
+            return await _context.Breaks
+                .Include(b => b.UserShift)
+                .Where(b => b.UserShift.UserId == userId &&
+                           b.Status == BreakStatus.Available)
+                .OrderBy(b => b.BreakNumber)
+                .FirstOrDefaultAsync();
+        }
+
+
+        public async Task<Break?> GetLastFinishedBreakByUserAsync(int userId)
+        {
+            return await _context.Breaks
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.User)
+                .Where(b => b.UserShift.UserId == userId && b.Status == BreakStatus.Finished && b.EndTime.HasValue)
+                .OrderByDescending(b => b.EndTime)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<Break?> GetLastBreakByUserAsync(int userId)
+        {
+            return await _context.Breaks
+                .Include(b => b.UserShift)
+                .Where(b => b.UserShift.UserId == userId)
+                .OrderByDescending(b => b.BreakNumber)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<Break>> GetBreaksByDateAndGroupAsync(DateOnly workDate, ShiftType group)
+        {
+            return await _context.Breaks
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.Schedule)
+                .AsNoTracking()
+                .Where(b => b.WorkDate == workDate && b.UserShift.Group == group)
+                .OrderBy(b => b.BreakNumber)
+                    .ThenBy(b => b.UserShift.User.UserName)
+                .ToListAsync();
+        }
+
         public async Task<Break> AddAsync(Break brk)
         {
-            if (brk.UserId <= 0)
-                throw new ArgumentException("Поле с UserId не может быть пустым");
+            if (brk.UserShiftId <= 0)
+                throw new ArgumentException("Поле с UserShiftId не может быть пустым");
 
-            if (await _context.Breaks.AnyAsync(b => b.UserId == brk.UserId && b.Status == BreakStatus.Taken))
-                throw new InvalidOperationException($"У пользователя с Id '{brk.UserId}' уже есть активный перерыв");
+            var userShift = await _context.UserShifts
+                .Include(us => us.Breaks)
+                .FirstOrDefaultAsync(us => us.Id == brk.UserShiftId);
+
+            if (userShift == null)
+                throw new ArgumentException($"UserShift с Id '{brk.UserShiftId}' не найден");
+
+            if (userShift.Breaks.Any(b => b.Status == BreakStatus.Taken))
+                throw new InvalidOperationException($"У пользователя уже есть активный перерыв");
 
             await _context.Breaks.AddAsync(brk);
             await _context.SaveChangesAsync();
@@ -65,30 +150,62 @@ namespace SkntBreak.Infrastructure.Data.Repositories
             return brk;
         }
 
+        public async Task<Break?> GetLastBreakByUserShiftAsync(int userShiftId)
+        {
+            return await _context.Breaks
+                .Include(b => b.UserShift)
+                .Where(b => b.UserShiftId == userShiftId)
+                .OrderByDescending(b => b.BreakNumber)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<Break?> GetActiveBreakByUserShiftAsync(int userShiftId)
+        {
+            return await _context.Breaks
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.User)
+                .AsNoTracking()
+                .Where(b => b.UserShiftId == userShiftId && b.Status == BreakStatus.Taken)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task UpdateAsync(Break brk)
         {
-            var breakEntity = await _context.Breaks.FindAsync(brk.Id);
-            if (breakEntity == null)
-            {
-                throw new InvalidOperationException($"Перерыв с Id - {brk.Id} не найден");
-            }
+            var breakEntity = await _context.Breaks
+                .Include(b => b.UserShift)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == brk.Id);
 
+            if (breakEntity == null)
+                throw new InvalidOperationException($"Перерыв с Id {brk.Id} не найден");
+
+            // Проверяем только если мы СОЗДАЁМ новый активный перерыв
+            // НЕ проверяем если завершаем существующий
             if (brk.Status == BreakStatus.Taken && breakEntity.Status != BreakStatus.Taken)
             {
-                if (await _context.Breaks.AnyAsync(b => b.UserId == brk.UserId && b.Status == BreakStatus.Taken && b.Id != brk.Id))
-                {
-                    throw new InvalidOperationException($"У пользователя с Id '{brk.UserId}' уже есть активный перерыв");
-                }
+                // Только при переходе в Taken проверяем, нет ли уже активного перерыва
+                var hasActiveBreak = await _context.Breaks
+                    .Include(b => b.UserShift)
+                    .AnyAsync(b =>
+                        b.UserShift.UserId == breakEntity.UserShift.UserId &&
+                        b.Status == BreakStatus.Taken &&
+                        b.Id != brk.Id);
+
+                if (hasActiveBreak)
+                    throw new InvalidOperationException("У пользователя уже есть активный перерыв");
             }
 
             _context.Breaks.Update(brk);
             await _context.SaveChangesAsync();
         }
 
+
         public async Task DeleteAsync(int id)
         {
             var brk = await _context.Breaks
-                .Include(b => b.User)
+                .Include(b => b.UserShift)
+                    .ThenInclude(us => us.User)
                 .FirstOrDefaultAsync(b => b.Id == id);
 
             if (brk == null)

@@ -22,6 +22,43 @@ namespace Skntbreak.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BreakPoolDay", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AvailableBreaks")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Group")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Remaining10MinBreaks")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Remaining20MinBreaks")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Total10MinBreaks")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Total20MinBreaks")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalBreaks")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BreakPoolDays");
+                });
+
             modelBuilder.Entity("Skntbreak.Core.Entities.Break", b =>
                 {
                     b.Property<int>("Id")
@@ -30,21 +67,30 @@ namespace Skntbreak.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BreakNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Type")
+                    b.Property<int>("UserShiftId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserShiftId");
 
                     b.ToTable("Breaks");
                 });
@@ -57,14 +103,17 @@ namespace Skntbreak.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BreakNumber")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsReserved")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -76,7 +125,7 @@ namespace Skntbreak.Infrastructure.Migrations
                     b.ToTable("BreakChats");
                 });
 
-            modelBuilder.Entity("Skntbreak.Core.Entities.BreakRule", b =>
+            modelBuilder.Entity("Skntbreak.Core.Entities.BreakQueue", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -84,20 +133,49 @@ namespace Skntbreak.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("MaxCount")
+                    b.Property<int>("BreakRound")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ScheduleId")
+                    b.Property<int>("DurationMinutes")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Type")
+                    b.Property<DateTime>("EnqueuedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Group")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("IsPriority")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("NotifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserShiftId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ScheduleId");
+                    b.HasIndex("UserShiftId");
 
-                    b.ToTable("BreakRules");
+                    b.HasIndex("Status", "NotifiedAt")
+                        .HasDatabaseName("IX_BreakQueues_Status_NotifiedAt");
+
+                    b.HasIndex("WorkDate", "Group", "BreakRound", "Position")
+                        .HasDatabaseName("IX_BreakQueues_WorkDate_Group_Round_Pos");
+
+                    b.ToTable("BreakQueues");
                 });
 
             modelBuilder.Entity("Skntbreak.Core.Entities.Schedule", b =>
@@ -108,6 +186,9 @@ namespace Skntbreak.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AllowDurationChoice")
+                        .HasColumnType("boolean");
+
                     b.Property<TimeSpan>("EndTime")
                         .HasColumnType("interval");
 
@@ -116,12 +197,39 @@ namespace Skntbreak.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("ShiftType")
+                        .HasColumnType("integer");
+
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("interval");
 
                     b.HasKey("Id");
 
                     b.ToTable("Schedules");
+                });
+
+            modelBuilder.Entity("Skntbreak.Core.Entities.ShiftBreakTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScheduleId");
+
+                    b.ToTable("ShiftBreakTemplates");
                 });
 
             modelBuilder.Entity("Skntbreak.Core.Entities.User", b =>
@@ -145,9 +253,6 @@ namespace Skntbreak.Infrastructure.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ScheduleId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -155,20 +260,54 @@ namespace Skntbreak.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Skntbreak.Core.Entities.UserShift", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Group")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
                     b.HasIndex("ScheduleId");
 
-                    b.ToTable("Users");
+                    b.HasIndex("UserId", "WorkDate")
+                        .IsUnique();
+
+                    b.ToTable("UserShifts");
                 });
 
             modelBuilder.Entity("Skntbreak.Core.Entities.Break", b =>
                 {
-                    b.HasOne("Skntbreak.Core.Entities.User", "User")
+                    b.HasOne("Skntbreak.Core.Entities.UserShift", "UserShift")
                         .WithMany("Breaks")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("UserShiftId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("UserShift");
                 });
 
             modelBuilder.Entity("Skntbreak.Core.Entities.BreakChat", b =>
@@ -182,10 +321,21 @@ namespace Skntbreak.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Skntbreak.Core.Entities.BreakRule", b =>
+            modelBuilder.Entity("Skntbreak.Core.Entities.BreakQueue", b =>
+                {
+                    b.HasOne("Skntbreak.Core.Entities.UserShift", "UserShift")
+                        .WithMany("QueueEntries")
+                        .HasForeignKey("UserShiftId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserShift");
+                });
+
+            modelBuilder.Entity("Skntbreak.Core.Entities.ShiftBreakTemplate", b =>
                 {
                     b.HasOne("Skntbreak.Core.Entities.Schedule", "Schedule")
-                        .WithMany("BreakRules")
+                        .WithMany("BreakTemplates")
                         .HasForeignKey("ScheduleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -193,28 +343,44 @@ namespace Skntbreak.Infrastructure.Migrations
                     b.Navigation("Schedule");
                 });
 
-            modelBuilder.Entity("Skntbreak.Core.Entities.User", b =>
+            modelBuilder.Entity("Skntbreak.Core.Entities.UserShift", b =>
                 {
                     b.HasOne("Skntbreak.Core.Entities.Schedule", "Schedule")
-                        .WithMany("Users")
+                        .WithMany("UserShifts")
                         .HasForeignKey("ScheduleId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Skntbreak.Core.Entities.User", "User")
+                        .WithMany("UserShifts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Schedule");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Skntbreak.Core.Entities.Schedule", b =>
                 {
-                    b.Navigation("BreakRules");
+                    b.Navigation("BreakTemplates");
 
-                    b.Navigation("Users");
+                    b.Navigation("UserShifts");
                 });
 
             modelBuilder.Entity("Skntbreak.Core.Entities.User", b =>
                 {
                     b.Navigation("BreakChats");
 
+                    b.Navigation("UserShifts");
+                });
+
+            modelBuilder.Entity("Skntbreak.Core.Entities.UserShift", b =>
+                {
                     b.Navigation("Breaks");
+
+                    b.Navigation("QueueEntries");
                 });
 #pragma warning restore 612, 618
         }

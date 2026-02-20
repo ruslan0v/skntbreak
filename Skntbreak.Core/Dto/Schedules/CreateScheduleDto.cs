@@ -7,6 +7,6 @@ namespace Skntbreak.Core.Dto.Schedules
         public string Name { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-        public List<CreateBreakRuleDto> BreakRules { get; set; } = new();
+        public ShiftType ShiftType { get; set; }
     }
 }

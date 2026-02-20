@@ -4,8 +4,8 @@ namespace Skntbreak.Core.Dto.Break
 {
     public class StartBreakDto
     {
-        public int UserId { get; set; }
-        public BreakType Type { get; set; }
-        public DateTime StartTi { get; set; }
+        public DateTime RequestTime { get; set; } = DateTime.UtcNow;
+        public int BreakNumber { get; set; }
+        public int DurationMinutes { get; set; } = 20;
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Skntbreak.Application.Interfaces;
+using Skntbreak.Core.Dto.Schedules;
 using Skntbreak.Core.Entities;
 using Skntbreak.Core.Enums;
 
@@ -37,7 +38,7 @@ namespace SkntBreak.Infrastructure.Data.Repositories
         public async Task<Schedule?> GetWithRulesAsync(int id)
         {
             return await _context.Schedules
-                .Include(s => s.BreakRules)
+                .Include(s => s.BreakTemplates)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
@@ -45,7 +46,8 @@ namespace SkntBreak.Infrastructure.Data.Repositories
         public async Task<Schedule?> GetWithUsersAsync(int id)
         {
             return await _context.Schedules
-                .Include(s => s.Users)
+                .Include(s => s.UserShifts)
+                    .ThenInclude(us => us.User)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Id == id);
         }

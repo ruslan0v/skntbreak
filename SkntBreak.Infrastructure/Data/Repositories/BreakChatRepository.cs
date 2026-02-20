@@ -46,21 +46,6 @@ namespace Skntbreak.Infrastructure.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<BreakChat>> GetByScheduleAsync(int scheduleId, DateTime date)
-        {
-            var startOfDay = date.Date;
-            var endOfDay = startOfDay.AddDays(1);
-
-            return await _context.BreakChats
-                .Include(bc => bc.User)
-                .AsNoTracking()
-                .Where(bc => bc.User.ScheduleId == scheduleId &&
-                             bc.StartTime >= startOfDay &&
-                             bc.StartTime < endOfDay)
-                .OrderByDescending(bc => bc.StartTime)
-                .ToListAsync();
-        }
-
         public async Task<BreakChat> AddAsync(BreakChat chatBreak)
         {
             if (chatBreak.UserId <= 0)

@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Skntbreak.Core.Entities;
+using Skntbreak.Core.Enums;
 using Skntbreak.Core.Interfaces;
 using SkntBreak.Infrastructure.Data;
 
@@ -32,6 +33,12 @@ namespace Skntbreak.Infrastructure.Data.Repositories
             return await _context.BreakPoolDays
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Id == id);
+        }
+
+        public async Task<BreakPoolDay?> GetByDateAndShiftAsync(DateOnly workDate, ShiftType shiftType)
+        {
+            return await _context.BreakPoolDays
+                .FirstOrDefaultAsync(b => b.WorkDate == workDate && b.Group == shiftType);
         }
 
         public async Task<BreakPoolDay> AddAsync(BreakPoolDay breakPoolDay)

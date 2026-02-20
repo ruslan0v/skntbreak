@@ -17,5 +17,7 @@ namespace Skntbreak.Application.Interfaces
         Task<User> AddAsync(User user);
         Task UpdateAsync(User user);
         Task DeleteAsync(int id);
+        Task<IEnumerable<User>> GetAllWithShiftsAndBreaksAsync();
+        Task<User?> GetByIdWithShiftsAndBreaksAsync(int userId);
     }
 }

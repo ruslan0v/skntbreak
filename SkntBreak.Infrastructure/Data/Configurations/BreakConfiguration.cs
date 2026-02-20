@@ -18,15 +18,24 @@ namespace SkntBreak.Infrastructure.Data.Configurations
             builder.Property(b => b.Status)
                 .IsRequired();
 
-            builder.Property(b => b.Type)
-                .IsRequired();
-
             builder.Property(b => b.StartTime)
                 .IsRequired();
 
-            builder.HasOne(b => b.User)
-                .WithMany(u => u.Breaks)
-                .HasForeignKey(b => b.UserId)
+            builder.Property(b => b.EndTime)
+                .IsRequired(false);
+
+            builder.Property(b => b.DurationMinutes)
+                .IsRequired();
+
+            builder.Property(b => b.BreakNumber)
+                .IsRequired();
+
+            builder.Property(b => b.WorkDate)
+                .IsRequired();
+
+            builder.HasOne(b => b.UserShift)
+                .WithMany(us => us.Breaks)
+                .HasForeignKey(b => b.UserShiftId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

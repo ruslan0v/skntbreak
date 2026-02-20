@@ -6,7 +6,6 @@ namespace Skntbreak.Core.Dto.Break
     {
         public int Id { get; set; }
         public BreakStatus Status { get; set; }
-        public BreakType Type { get; set; }
         public int DurationMinutes { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }

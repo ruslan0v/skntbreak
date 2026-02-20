@@ -12,8 +12,7 @@ namespace Skntbreak.Core.Entities
         public int Id { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
-
-        public BreakType Type { get; set; }
+        public int BreakNumber { get; set; }
         public DateTime StartTime {  get; set; }
         public DateTime EndTime { get; set; }
         public bool IsReserved { get; set; }

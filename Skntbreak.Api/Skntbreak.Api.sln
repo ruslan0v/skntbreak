@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skntbreak.Infrastructure", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skntbreak.Application", "..\Skntbreak.Application\Skntbreak.Application.csproj", "{81D27D44-75F7-4900-9D8F-06F1BC633818}"
 EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "frontend", "..\frontend\frontend.esproj", "{349EC62A-85E3-C852-F5FF-E97A8E3AB0F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,8 +38,17 @@ Global
 		{81D27D44-75F7-4900-9D8F-06F1BC633818}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81D27D44-75F7-4900-9D8F-06F1BC633818}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81D27D44-75F7-4900-9D8F-06F1BC633818}.Release|Any CPU.Build.0 = Release|Any CPU
+		{349EC62A-85E3-C852-F5FF-E97A8E3AB0F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{349EC62A-85E3-C852-F5FF-E97A8E3AB0F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{349EC62A-85E3-C852-F5FF-E97A8E3AB0F5}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{349EC62A-85E3-C852-F5FF-E97A8E3AB0F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{349EC62A-85E3-C852-F5FF-E97A8E3AB0F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{349EC62A-85E3-C852-F5FF-E97A8E3AB0F5}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2CC99160-214D-43E2-8214-30B4AA7F8D02}
 	EndGlobalSection
 EndGlobal
