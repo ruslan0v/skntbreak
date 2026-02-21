@@ -22,6 +22,7 @@ namespace Skntbreak.Application.Services
         private readonly IScheduleRepository _scheduleRepository;
         private readonly IBreakPoolDayRepository _breakPoolDayRepository;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IBreakService _breakService;
 
         public AdminService(
             IUserRepository userRepository,
@@ -29,7 +30,8 @@ namespace Skntbreak.Application.Services
             IBreakRepository breakRepository,
             IScheduleRepository scheduleRepository,
             IBreakPoolDayRepository breakPoolDayRepository,
-            IPasswordHasher passwordHasher)
+            IPasswordHasher passwordHasher,
+            IBreakService breakService)
         {
             _userRepository = userRepository;
             _userShiftRepository = userShiftRepository;
@@ -37,6 +39,7 @@ namespace Skntbreak.Application.Services
             _scheduleRepository = scheduleRepository;
             _breakPoolDayRepository = breakPoolDayRepository;
             _passwordHasher = passwordHasher;
+            _breakService = breakService;
         }
 
         // ==================== ПОЛЬЗОВАТЕЛИ ====================
@@ -88,24 +91,20 @@ namespace Skntbreak.Application.Services
         public async Task<UserShift> EndUserShiftAsync(int userShiftId)
         {
             var userShift = await _userShiftRepository.GetByIdAsync(userShiftId);
-            if (userShift == null)
-                throw new Exception($"Смена с ID {userShiftId} не найдена");
-            if (userShift.EndedAt != null)
-                throw new Exception("Смена уже завершена");
+            if (userShift == null) throw new Exception($"Смена с ID {userShiftId} не найдена");
+            if (userShift.EndedAt != null) throw new Exception("Смена уже завершена");
 
-            // Завершить активный перерыв, если есть
             var activeBreak = userShift.Breaks.FirstOrDefault(b => b.Status == BreakStatus.Taken);
             if (activeBreak != null)
             {
-                activeBreak.Status = BreakStatus.Finished;
-                activeBreak.EndTime = DateTime.UtcNow;
+                // ИНКАПСУЛИРОВАННЫЙ ВЫЗОВ: Гарантирует освобождение слотов и уведомление очереди
+                await _breakService.EndBreakAsync(activeBreak.Id, userShift.UserId);
             }
 
             userShift.EndedAt = DateTime.UtcNow;
             await _userShiftRepository.UpdateAsync(userShift);
             return userShift;
         }
-
 
         public async Task<AdminUserDto> CreateUser(CreateUserAdminDto request)
         {

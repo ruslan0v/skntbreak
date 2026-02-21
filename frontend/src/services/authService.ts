@@ -1,28 +1,19 @@
-import axiosInstance, { setAuthToken, clearAuth } from '../api/client';
+﻿import { api, setAuthToken, clearAuth } from '../api/client';
 import { User, AuthResponse } from '../types/auth.types';
 
 const AUTH_USER_STORAGE_KEY = 'auth_user';
 
 export const authService = {
-    login: async (login: string, password: string): Promise<AuthResponse> => {
-        const response = await axiosInstance.post<AuthResponse>('/users/login', {
-            login,
-            password
-        });
-
+    login: async (login: string, password: string) => {
+        const response = await api.Users.login(login, password); // ✅ через api
         if (response.data.token) {
-            setAuthToken(response.data.token);
+            setAuthToken(response.data.token); // ✅ named import
         }
-
         return response.data;
     },
 
-    register: async (userName: string, login: string, password: string): Promise<void> => {
-        await axiosInstance.post('/users/register', {
-            userName,
-            login,
-            password
-        });
+    register: async (userName: string, login: string, password: string) => {
+        await api.Users.register(userName, login, password); // ✅
     },
 
     getStoredUser: (): User | null => {
@@ -34,8 +25,8 @@ export const authService = {
         localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
     },
 
-    logout: (): void => {
-        clearAuth();
+    logout: () => {
+        clearAuth(); // ✅ named import
     },
 
     isAuthenticated: (): boolean => {

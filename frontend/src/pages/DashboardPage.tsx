@@ -1,34 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import toast from 'react-hot-toast';
-import { startConnection, stopConnection, getConnection } from '../services/signalRService';
-import type { HubConnection } from '@microsoft/signalr';
+import { BreakQueue } from '../components/BreakQueue';
 
-// ============ ИНТЕРФЕЙСЫ ============
 interface Schedule {
     id: number;
     name: string;
     startTime: string;
     endTime: string;
-}
-
-interface Break {
-    id: number;
-    status: string;
-    durationMinutes: number;
-    breakNumber: number;
-    startTime?: string;
-    endTime?: string;
-}
-
-interface UserShift {
-    id: number;
-    userId: number;
-    scheduleId: number;
-    workDate: string;
-    group: string;
-    schedule?: Schedule;
-    breaks?: Break[];
 }
 
 interface Colleague {
@@ -40,851 +19,255 @@ interface Colleague {
     completedBreaksCount: number;
 }
 
-interface PoolInfo {
-    totalBreaks: number;
-    availableBreaks: number;
-    activeBreaks: number;
-    canTakeBreak: boolean;
-    message?: string;
-}
-
-interface ActiveBreak {
-    id: number;
-    status: string;
-    durationMinutes: number;
-    breakNumber: number;
-    startTime: string;
-}
-
-interface QueueEntry {
-    id: number;
-    userId: number;
-    userName: string;
-    position: number;
-    durationMinutes: number;
-    status: 'Waiting' | 'Notified' | 'Confirmed' | 'Cancelled';
-    isPriority: boolean;
-    enqueuedAt: string;
-    notifiedAt?: string;
-}
-
-interface QueueState {
-    currentRound: number;
-    isRoundComplete: boolean;
-    queue: QueueEntry[];
-    availableSlots: number;
-    activeBreaks: number;
-    allowDurationChoice: boolean;
-    remaining10Min?: number;
-    remaining20Min?: number;
-    myEntry?: QueueEntry;
-}
-
-// ============ КОМПОНЕНТ ============
 export const DashboardPage: React.FC = () => {
-    // === STATE ===
-    const [currentShift, setCurrentShift] = useState<UserShift | null>(null);
-    const [colleagues, setColleagues] = useState<Colleague[]>([]);
-    const [schedules, setSchedules] = useState<Schedule[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [currentTime, setCurrentTime] = useState(new Date());
-    const [activeBreak, setActiveBreak] = useState<ActiveBreak | null>(null);
-    const [remainingSeconds, setRemainingSeconds] = useState(0);
-    const [poolInfo, setPoolInfo] = useState<PoolInfo | null>(null);
-    const [isEndingBreak, setIsEndingBreak] = useState(false);
-    const [autoEndTriggered, setAutoEndTriggered] = useState(false);
-    const [queueState, setQueueState] = useState<QueueState | null>(null);
-    const [isInQueue, setIsInQueue] = useState(false);
-    const [showForm, setShowForm] = useState(false);
-    const [selectedScheduleId, setSelectedScheduleId] = useState('');
-    const [signalRConnection, setSignalRConnection] = useState<HubConnection | null>(null);
+    const [currentShift, setCurrentShift] = useState<any | null>(null);       // ✅
+    const [colleagues, setColleagues] = useState<Colleague[]>([]);             // ✅
+    const [schedules, setSchedules] = useState<Schedule[]>([]);                // ✅
+    const [activeBreak, setActiveBreak] = useState<any | null>(null);         // ✅
+    const [poolInfo, setPoolInfo] = useState<any | null>(null);
+    const [selectedScheduleId, setSelectedScheduleId] = useState('');         // ✅
+    const [shiftElapsed, setShiftElapsed] = useState(0);                      // ✅
+    const [breakRemaining, setBreakRemaining] = useState(0);                  // ✅
 
-    // === ЭФФЕКТЫ ===
-
-    // Таймер текущего времени
-    useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
-
-    // Загрузка начальных данных
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    // SignalR подключение при наличии смены
-    useEffect(() => {
-        if (!currentShift) {
-            // Если смены нет, отключаем SignalR
-            if (signalRConnection) {
-                console.log('📴 Отключение SignalR (нет активной смены)');
-                stopConnection();
-                setSignalRConnection(null);
-            }
-            return;
-        }
-
-        let mounted = true;
-
-        const initSignalR = async () => {
-            try {
-                console.log('🔌 Инициализация SignalR...');
-
-                // Переподключаем, если уже было подключение
-                await stopConnection();
-
-                const connection = await startConnection();
-
-                if (!mounted) return;
-
-                // Подписка на события очереди
-                connection.on('QueueUpdated', (queue: QueueEntry[], availableSlots: number, currentRound: number) => {
-                    if (!mounted) return;
-                    console.log('🔄 QueueUpdated:', { queue, availableSlots, currentRound });
-                    setQueueState(prev => prev ? { ...prev, queue, availableSlots, currentRound } : null);
-                });
-
-                connection.on('YourTurn', (queueEntryId: number, durationMinutes: number, timeoutSeconds: number) => {
-                    if (!mounted) return;
-                    console.log('⏰ YourTurn:', { queueEntryId, durationMinutes, timeoutSeconds });
-                    toast('🔔 Ваша очередь на перерыв!', { icon: '⏰', duration: 10000 });
-                    loadQueueState();
-                });
-
-                connection.on('NotificationExpired', (queueEntryId: number, newPosition: number) => {
-                    if (!mounted) return;
-                    console.log('❌ NotificationExpired:', { queueEntryId, newPosition });
-                    toast.error(`Время истекло. Новая позиция: ${newPosition}`);
-                    loadQueueState();
-                });
-
-                connection.on('BreakEnded', (userId: number, userName: string, breakRound: number) => {
-                    if (!mounted) return;
-                    console.log('✅ BreakEnded:', { userId, userName, breakRound });
-                    toast(`${userName} завершил перерыв`, { icon: '✅' });
-                    loadQueueState();
-                });
-
-                setSignalRConnection(connection);
-                console.log('✅ SignalR подключен');
-
-                // КРИТИЧНО: Загрузить состояние очереди после подключения
-                await loadQueueState();
-
-            } catch (err) {
-                console.error('❌ Ошибка SignalR:', err);
-                toast.error('Ошибка подключения к серверу уведомлений');
-            }
-        };
-
-        initSignalR();
-
-        return () => {
-            mounted = false;
-            if (signalRConnection) {
-                signalRConnection.off('QueueUpdated');
-                signalRConnection.off('YourTurn');
-                signalRConnection.off('NotificationExpired');
-                signalRConnection.off('BreakEnded');
-            }
-        };
-    }, [currentShift?.id]); // Перезапуск при смене ID смены
-
-    // Таймер активного перерыва с автозавершением
-    useEffect(() => {
-        if (!activeBreak) {
-            setRemainingSeconds(0);
-            setAutoEndTriggered(false);
-            return;
-        }
-
-        const calculateRemaining = () => {
-            const startTime = new Date(activeBreak.startTime).getTime();
-            const now = Date.now();
-            const elapsed = Math.floor((now - startTime) / 1000);
-            const totalSeconds = activeBreak.durationMinutes * 60;
-            const remaining = Math.max(0, totalSeconds - elapsed);
-
-            setRemainingSeconds(remaining);
-
-            // Автозавершение при истечении времени
-            if (remaining === 0 && elapsed >= totalSeconds && !isEndingBreak && !autoEndTriggered) {
-                console.log('⏱️ Время перерыва истекло, автозавершение...');
-                setAutoEndTriggered(true);
-                handleEndBreak();
-            }
-        };
-
-        calculateRemaining();
-        const interval = setInterval(calculateRemaining, 1000);
-        return () => clearInterval(interval);
-    }, [activeBreak, isEndingBreak, autoEndTriggered]);
-
-    // === ФУНКЦИИ ЗАГРУЗКИ ДАННЫХ ===
+    const getMskDateString = () => {
+        const now = new Date();
+        const msk = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000));
+        return msk.toISOString().split('T')[0]; // ✅ строка, не массив
+    };
 
     const loadData = async () => {
-        // 1. Формируем дату с учетом смещения (чтобы получить локальную дату 'YYYY-MM-DD')
-        const now = new Date();
-        // getTimezoneOffset возвращает разницу в минутах со знаком минус для восточного полушария
-        // Например, для Москвы (-180). Поэтому вычитаем смещение.
-        const offset = now.getTimezoneOffset();
-        const todayStr = new Date(now.getTime() - (offset * 60000)).toISOString().split('T')[0];
-
+        const todayStr = getMskDateString();
         try {
-            setLoading(true);
-            setError('');
-
-            // 2. Параллельная загрузка независимых данных (графики и смена)
-            // Это ускорит загрузку страницы
-            const [schedulesResponse, shiftResponseResult] = await Promise.allSettled([
-                api.Schedules.getAllSchedules(),
-                api.Shifts.getMyShift(todayStr)
-            ]);
-
-            // Обработка графиков
-            if (schedulesResponse.status === 'fulfilled') {
-                setSchedules(schedulesResponse.value.data);
-                if (schedulesResponse.value.data.length > 0 && !selectedScheduleId) {
-                    // Устанавливаем дефолтный график только если он еще не выбран
-                    setSelectedScheduleId(schedulesResponse.value.data[0].id.toString());
-                }
-            } else {
-                console.error('Ошибка загрузки расписаний:', schedulesResponse.reason);
+            const schedRes = await api.Shifts.getAvailableSchedules();
+            setSchedules(schedRes.data);
+            if (schedRes.data.length > 0 && !selectedScheduleId) {
+                setSelectedScheduleId(schedRes.data[0].id.toString()); // ✅
             }
 
-            // Обработка смены
-            if (shiftResponseResult.status === 'fulfilled') {
-                const shiftData = shiftResponseResult.value.data;
-                setCurrentShift(shiftData);
+            const shiftRes = await api.Shifts.getMyShift(todayStr);
+            setCurrentShift(shiftRes.data);
 
-                // Если смена есть — догружаем зависимые данные (коллеги, пул, активный перерыв)
-                if (shiftData?.scheduleId) {
-                    try {
-                        // Используем todayStr, так как API ожидает строку даты
-                        const colleaguesResponse = await api.Shifts.getColleagues(
-                            shiftData.scheduleId,
-                            todayStr
-                        );
-                        setColleagues(colleaguesResponse.data);
-                    } catch (err) {
-                        console.error('Ошибка загрузки коллег:', err);
-                    }
+            if (shiftRes.data?.scheduleId) {
+                const colRes = await api.Shifts.getColleagues(shiftRes.data.scheduleId, todayStr);
+                setColleagues(colRes.data);
 
-                    // Загружаем инфо о пуле и активном перерыве
-                    // (убедитесь, что эти функции принимают строку даты или исправьте вызов)
-                    await loadPoolInfo(todayStr);
-                    await loadActiveBreak();
-                }
-            } else {
-                // Если ошибка НЕ 404, логируем её
-                // (Promise.allSettled не выбрасывает ошибку, нужно проверить reason)
-                const error = shiftResponseResult.reason;
-                if (error?.response?.status !== 404) {
-                    console.error('Ошибка загрузки смены:', error);
-                    // Можно показать ошибку пользователю, если это критично
-                }
-                // Смены нет (или ошибка) — сбрасываем стейт
-                setCurrentShift(null);
-                setColleagues([]); // Очищаем коллег, так как смены нет
+                const poolRes = await api.Breaks.getBreakPoolInfo(todayStr);
+                setPoolInfo(poolRes.data);
+
+                const breakRes = await api.Breaks.getMyActiveBreak();
+                setActiveBreak(breakRes.data.hasActiveBreak ? breakRes.data.breakData : null);
             }
-
-        } catch (err: any) {
-            // Глобальный перехватчик непредвиденных ошибок
-            setError(err.response?.data?.error || 'Критическая ошибка загрузки данных');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
-    const loadQueueState = async () => {
-        try {
-            const response = await api.Queue.getState();
-            console.log('📊 Состояние очереди загружено:', response.data);
-            setQueueState(response.data);
-            setIsInQueue(!!response.data.myEntry);
         } catch (err: any) {
             if (err.response?.status !== 404) {
-                console.error('Ошибка загрузки очереди:', err);
+                console.error(err);
             }
         }
     };
 
-    const loadPoolInfo = async (date: string) => {
-        try {
-            const response = await api.Breaks.getBreakPoolInfo(date);
-            setPoolInfo(response.data);
-        } catch (err) {
-            console.error('Ошибка загрузки информации о пуле:', err);
-        }
-    };
+    useEffect(() => {
+        loadData();
+    }, []); // ✅
 
-    const loadActiveBreak = async () => {
-        try {
-            const response = await api.Breaks.getMyActiveBreak();
-            if (response.data.hasActiveBreak) {
-                setActiveBreak(response.data.breakData);
-            } else {
-                setActiveBreak(null);
-            }
-        } catch (err) {
-            console.error('Ошибка загрузки активного перерыва:', err);
-        }
-    };
+    useEffect(() => {
+        if (!currentShift) return;
+        const start = new Date(currentShift.startedAt).getTime();
+        const interval = setInterval(() => {
+            setShiftElapsed(Math.floor((Date.now() - start) / 1000));
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [currentShift]); // ✅ зависимость от currentShift
 
-    // === ОБРАБОТЧИКИ СОБЫТИЙ ===
+    useEffect(() => {
+        if (!activeBreak) {
+            setBreakRemaining(0);
+            return;
+        }
+        const interval = setInterval(() => {
+            const startTime = new Date(activeBreak.startTime).getTime();
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const total = activeBreak.durationMinutes * 60;
+            setBreakRemaining(Math.max(0, total - elapsed));
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [activeBreak]); // ✅ зависимость от activeBreak
 
     const handleStartShift = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedScheduleId) {
-            toast.error('Выберите расписание');
-            return;
-        }
-
+        if (!selectedScheduleId) return;
         try {
             await api.Shifts.startShift({ scheduleId: parseInt(selectedScheduleId) });
             toast.success('Смена начата!');
-            setShowForm(false);
-
-            // Перезагрузка данных
-            await loadData();
-
-            // КРИТИЧНО: SignalR переподключится автоматически через useEffect[currentShift]
-            // Ждем немного, чтобы подключение успело установиться
-            setTimeout(async () => {
-                await loadQueueState();
-            }, 500);
-
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Ошибка начала смены');
-        }
-    };
-
-    const handleEndShift = async () => {
-        if (!window.confirm('Вы уверены, что хотите завершить смену?')) return;
-
-        try {
-            await api.Shifts.endShift();
-            toast.success('Смена завершена');
-            setCurrentShift(null);
-            setQueueState(null);
-            setActiveBreak(null);
             await loadData();
         } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Ошибка завершения смены');
-        }
-    };
-
-    const handleDeleteShift = async () => {
-        if (!currentShift || !window.confirm('Удалить смену?')) return;
-
-        try {
-            await api.Shifts.deleteShift(currentShift.id);
-            toast.success('Смена удалена');
-            setCurrentShift(null);
-            await loadData();
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Ошибка удаления смены');
-        }
-    };
-
-    const handleStartBreak = async () => {
-        if (!window.confirm('Начать перерыв?')) return;
-
-        try {
-            await api.Breaks.startBreak({ breakNumber: 1, durationMinutes: 20 });
-            toast.success('Перерыв начат!');
-            await loadActiveBreak();
-            await loadPoolInfo(new Date().toISOString().split('T')[0]);
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Ошибка начала перерыва');
+            toast.error(err.response?.data?.error || 'Ошибка начала смены'); // ✅
         }
     };
 
     const handleEndBreak = async () => {
-        if (!activeBreak || isEndingBreak) return;
-
+        if (!activeBreak) return;
         try {
-            setIsEndingBreak(true);
             await api.Breaks.endBreak(activeBreak.id);
-            toast.success('Перерыв завершен!');
+            toast.success('Перерыв завершён!');
             setActiveBreak(null);
-            await loadPoolInfo(new Date().toISOString().split('T')[0]);
-            await loadQueueState();
+            await loadData();
         } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Ошибка завершения перерыва');
-        } finally {
-            setIsEndingBreak(false);
+            toast.error(err.response?.data?.error || 'Ошибка завершения перерыва'); // ✅
         }
     };
 
-    const handleEnqueueBreak = async () => {
-        if (!currentShift) {
-            toast.error('Сначала начните смену');
-            return;
-        }
-
-        try {
-            const response = await api.Queue.enqueue();
-            toast.success(`Вы в очереди! Позиция: ${response.data.position}`);
-            await loadQueueState();
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Ошибка входа в очередь');
-        }
+    const formatDuration = (seconds: number) => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        if (h > 0) return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
-    const handleConfirmBreak = async (queueEntryId: number) => {
-        try {
-            await api.Queue.confirm(queueEntryId);
-            toast.success('Перерыв подтвержден!');
-            await loadActiveBreak();
-            await loadQueueState();
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Ошибка подтверждения');
-        }
-    };
-
-    // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
-
-    const formatTime = (date: Date): string => {
-        return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    };
-
-    const getDayOfWeek = (): string => {
-        const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
-        return days[currentTime.getDay()];
-    };
-
-    const getBreaksRemaining = (): number => {
-        if (!currentShift?.breaks) return 0;
-        const completed = currentShift.breaks.filter(b => b.status === 'Finished').length;
-        return Math.max(0, 2 - completed); // Предполагаем 2 перерыва за смену
-    };
-
-    // === РЕНДЕР ===
-
-    if (loading) {
+    if (!currentShift) {
         return (
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <p>Загрузка...</p>
+            <div className="panel-main" style={{ maxWidth: '600px', margin: '0 auto' }}>
+                <h2 style={{ marginTop: 0, fontSize: '24px' }}>Начать смену</h2>
+                <form onSubmit={handleStartShift}>
+                    <select
+                        className="clean-input mt-3"
+                        value={selectedScheduleId}
+                        onChange={(e) => setSelectedScheduleId(e.target.value)}
+                        required
+                    >
+                        <option value="">Выберите расписание</option>
+                        {schedules.map(s => (
+                            <option key={s.id} value={s.id}>
+                                {s.name} ({s.startTime.slice(0, 5)} - {s.endTime.slice(0, 5)})
+                            </option>
+                        ))}
+                    </select>
+                    <button type="submit" className="btn-solid-green mt-4" style={{ width: '100%' }}>
+                        Начать работу
+                    </button>
+                </form>
             </div>
         );
     }
 
+    const currentUser = colleagues.find(c => c.isCurrentUser);
+    const sortedColleagues = [...colleagues].sort((a, b) =>
+        a.isCurrentUser === b.isCurrentUser ? 0 : a.isCurrentUser ? -1 : 1
+    );
+    const breaksRemaining = currentShift?.breaks
+        ? Math.max(0, 2 - currentShift.breaks.filter((b: any) => b.status === 'Finished').length)
+        : 0;
+
     return (
-        <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-            {/* Заголовок */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#111827', margin: 0, marginBottom: '0.5rem' }}>
-                    {getDayOfWeek()}
-                </h1>
-                <div style={{ fontSize: '2.5rem', fontWeight: 300, color: '#84cc16' }}>
-                    {formatTime(currentTime)}
+        <div className="dashboard-layout">
+            <div>
+                <div className="panel-main">
+                    {currentUser && (
+                        <h2 style={{ fontSize: '32px', marginBottom: '32px', marginTop: 0 }}>
+                            (Вы) {currentUser.userName}
+                        </h2>
+                    )}
+                    <table className="borderless-table">
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th>Статус</th>
+                                <th>Перерывов</th>
+                                <th>Таймер</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sortedColleagues.map(c => {
+                                const isOnBreak = c.activeBreaksCount > 0;
+                                return (
+                                    <tr key={c.userId}>
+                                        <td>
+                                            <div className="user-name-cell">
+                                                {!c.isCurrentUser && <span className="user-icon">👤</span>}
+                                                <span className={c.isCurrentUser ? 'fw-bold' : 'fw-medium'}>
+                                                    {c.isCurrentUser ? `(Вы) ${c.userName}` : c.userName}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className={`fw-bold ${isOnBreak ? 'text-red' : 'text-green'}`}>
+                                            {isOnBreak ? 'Перерыв' : 'В линии'}
+                                        </td>
+                                        <td>{c.completedBreaksCount}/2</td>
+                                        <td className="tabular-nums text-muted fw-medium">
+                                            {c.isCurrentUser && !isOnBreak
+                                                ? formatDuration(shiftElapsed)
+                                                : (isOnBreak ? '15:03 (20)' : '02:34:42')}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 </div>
+                <BreakQueue activeBreak={activeBreak} onBreakStateChange={loadData} />
             </div>
 
-            {/* Ошибки */}
-            {error && (
-                <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
-                    {error}
-                </div>
-            )}
-
-            {/* Информация о текущей смене */}
-            {currentShift && (
-                <div style={{
-                    backgroundColor: '#fff',
-                    borderRadius: '12px',
-                    padding: '1rem 1.5rem',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                    marginBottom: '1.5rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-                        <div>
-                            <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>Расписание:</span>
-                            <span style={{ fontSize: '1.125rem', fontWeight: 600 }}>
-                                {' '}{currentShift.schedule?.name}
-                            </span>
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                            {currentShift.schedule?.startTime} - {currentShift.schedule?.endTime}
-                        </div>
+            <div>
+                <div className="panel-side shift-status-card">
+                    <div className="shift-status-header">
+                        <span className="fw-bold">Смена</span>
+                        <span className="tabular-nums fw-medium">
+                            {currentShift.schedule?.startTime.slice(0, 5)}-{currentShift.schedule?.endTime.slice(0, 5)}
+                        </span>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button
-                            onClick={handleDeleteShift}
-                            style={{
-                                padding: '0.5rem 1rem',
-                                backgroundColor: '#f3f4f6',
-                                color: '#374151',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '0.875rem',
-                                fontWeight: 500
-                            }}
-                        >
-                            Удалить
+                    <div className="text-muted mt-3" style={{ fontSize: '14px' }}>
+                        Перерывов осталось: {breaksRemaining}
+                    </div>
+                    <div className="shift-emoji">
+                        {activeBreak ? '☕' : '🫡'}
+                    </div>
+                    <div className="shift-main-timer">
+                        {activeBreak ? formatDuration(breakRemaining) : formatDuration(shiftElapsed)}
+                    </div>
+                    {activeBreak && (
+                        <button className="btn-solid-red" onClick={handleEndBreak}>
+                            На месте
                         </button>
-                        <button
-                            onClick={handleEndShift}
-                            style={{
-                                padding: '0.5rem 1rem',
-                                backgroundColor: '#ef4444',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '0.875rem',
-                                fontWeight: 500
-                            }}
-                        >
-                            Завершить смену
-                        </button>
+                    )}
+                    <div className="text-muted mt-4 fw-medium" style={{ fontSize: '14px' }}>
+                        Перерывов свободно: {poolInfo?.availableBreaks || 0} // ✅
                     </div>
                 </div>
-            )}
 
-            {/* Форма начала смены */}
-            {showForm && !currentShift && (
-                <div style={{
-                    backgroundColor: '#fff',
-                    borderRadius: '12px',
-                    padding: '1.5rem',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                    marginBottom: '1.5rem'
-                }}>
-                    <h3 style={{ marginTop: 0 }}>Начать смену</h3>
-                    <form onSubmit={handleStartShift}>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '0.875rem',
-                                fontWeight: 500,
-                                color: '#374151',
-                                marginBottom: '0.5rem'
-                            }}>
-                                Расписание
-                            </label>
-                            <select
-                                value={selectedScheduleId}
-                                onChange={(e) => setSelectedScheduleId(e.target.value)}
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '8px',
-                                    fontSize: '1rem'
-                                }}
-                            >
-                                <option value="">Выберите расписание</option>
-                                {schedules.map(schedule => (
-                                    <option key={schedule.id} value={schedule.id}>
-                                        {schedule.name} ({schedule.startTime}-{schedule.endTime})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <button
-                                type="button"
-                                onClick={() => setShowForm(false)}
-                                style={{
-                                    padding: '0.75rem 1.5rem',
-                                    backgroundColor: '#f3f4f6',
-                                    color: '#374151',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Отмена
-                            </button>
-                            <button
-                                type="submit"
-                                style={{
-                                    padding: '0.75rem 1.5rem',
-                                    backgroundColor: '#84cc16',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    fontWeight: 600
-                                }}
-                            >
-                                Начать
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
-
-            {/* Кнопка начала смены */}
-            {!currentShift && !showForm && (
-                <button
-                    onClick={() => setShowForm(true)}
-                    style={{
-                        width: '100%',
-                        padding: '1rem',
-                        backgroundColor: '#84cc16',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '1.125rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        marginBottom: '1.5rem'
-                    }}
-                >
-                    + Начать смену
-                </button>
-            )}
-
-            {/* Основная сетка */}
-            {currentShift && (
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '2fr 1fr',
-                    gap: '2rem'
-                }}>
-                    {/* Левая колонка - Коллеги */}
-                    <div>
-                        {colleagues.length > 0 && (
-                            <div style={{
-                                backgroundColor: '#fff',
-                                borderRadius: '12px',
-                                padding: '1.5rem',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                marginBottom: '1.5rem'
-                            }}>
-                                <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.125rem', fontWeight: 600 }}>
-                                    Коллеги на смене
-                                </h3>
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '2px solid #f3f4f6', textAlign: 'left' }}>
-                                            <th style={{ padding: '12px 8px', fontWeight: 600, fontSize: '0.875rem', color: '#6b7280' }}>
-                                                Сотрудник
-                                            </th>
-                                            <th style={{ padding: '12px 8px', fontWeight: 600, fontSize: '0.875rem', color: '#6b7280' }}>
-                                                Группа
-                                            </th>
-                                            <th style={{ padding: '12px 8px', fontWeight: 600, fontSize: '0.875rem', color: '#6b7280' }}>
-                                                Перерывы
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {colleagues.map(colleague => (
-                                            <tr key={colleague.userId} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                                                <td style={{
-                                                    padding: '16px 8px',
-                                                    fontWeight: colleague.isCurrentUser ? 600 : 400,
-                                                    color: colleague.isCurrentUser ? '#84cc16' : '#111827'
-                                                }}>
-                                                    {colleague.userName} {colleague.isCurrentUser && '(Вы)'}
-                                                </td>
-                                                <td style={{ padding: '16px 8px', color: '#6b7280' }}>
-                                                    {colleague.group === 'Day' ? 'День' : 'Вечер'}
-                                                </td>
-                                                <td style={{ padding: '16px 8px', color: '#6b7280' }}>
-                                                    {colleague.activeBreaksCount > 0 ? '🔴 ' : ''}
-                                                    {colleague.completedBreaksCount} завершено
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                <div className="panel-side" style={{ marginBottom: 0 }}>
+                    <h3 className="roles-title">Сегодня на смене</h3>
+                    <div className="role-group">
+                        <div className="role-label">Лиды</div>
+                        <div className="role-items">
+                            <div className="role-item">
+                                <span className="pill-badge-green">Саша</span>
+                                <span className="tabular-nums fw-medium text-muted">16-00</span>
                             </div>
-                        )}
+                            <div className="role-item">
+                                <span className="pill-badge-green">Настя</span>
+                                <span className="tabular-nums fw-medium text-muted">16-00</span>
+                            </div>
+                        </div>
                     </div>
-
-                    {/* Правая колонка - Перерыв и очередь */}
-                    <div>
-                        {/* Панель перерыва */}
-                        <div style={{
-                            backgroundColor: '#fff',
-                            borderRadius: '12px',
-                            padding: '1.5rem',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            marginBottom: '1.5rem'
-                        }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                <h3 style={{ margin: 0, fontSize: '0.875rem', color: '#6b7280' }}>
-                                    {activeBreak ? 'Активный перерыв' : 'Перерыв'}
-                                </h3>
-                            </div>
-
-                            <div style={{
-                                fontSize: '3rem',
-                                fontWeight: 300,
-                                textAlign: 'center',
-                                marginBottom: '2rem',
-                                fontVariantNumeric: 'tabular-nums',
-                                color: activeBreak ? (remainingSeconds > 0 ? '#10b981' : '#ef4444') : '#6b7280'
-                            }}>
-                                {activeBreak
-                                    ? `${Math.floor(remainingSeconds / 60).toString().padStart(2, '0')}:${(remainingSeconds % 60).toString().padStart(2, '0')}`
-                                    : '00:00'
-                                }
-                            </div>
-
-                            {activeBreak ? (
-                                <button
-                                    onClick={handleEndBreak}
-                                    disabled={isEndingBreak}
-                                    style={{
-                                        width: '100%',
-                                        padding: '1rem',
-                                        backgroundColor: isEndingBreak ? '#9ca3af' : '#ef4444',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        fontSize: '1rem',
-                                        fontWeight: 600,
-                                        cursor: isEndingBreak ? 'not-allowed' : 'pointer'
-                                    }}
-                                >
-                                    {isEndingBreak ? 'Завершение...' : 'Завершить перерыв'}
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={handleStartBreak}
-                                    disabled={!poolInfo?.canTakeBreak || loading}
-                                    style={{
-                                        width: '100%',
-                                        padding: '1rem',
-                                        backgroundColor: poolInfo?.canTakeBreak && !loading ? '#10b981' : '#9ca3af',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        fontSize: '1rem',
-                                        fontWeight: 600,
-                                        cursor: poolInfo?.canTakeBreak && !loading ? 'pointer' : 'not-allowed'
-                                    }}
-                                >
-                                    Начать перерыв
-                                </button>
-                            )}
-
-                            <div style={{ fontSize: '0.875rem', color: '#6b7280', textAlign: 'center', marginTop: '1rem' }}>
-                                Осталось перерывов: <strong>{getBreaksRemaining()}</strong>
+                    <div className="role-group">
+                        <div className="role-label">Координатор</div>
+                        <div className="role-items">
+                            <div className="role-item">
+                                <span className="pill-badge-green">Ирина</span>
+                                <span className="tabular-nums fw-medium text-muted">10-19</span>
                             </div>
                         </div>
-
-                        {/* Панель очереди */}
-                        {queueState && (
-                            <div style={{
-                                backgroundColor: '#fff',
-                                borderRadius: '12px',
-                                padding: '1.5rem',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                            }}>
-                                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.125rem', fontWeight: 600 }}>
-                                    Очередь (раунд {queueState.currentRound})
-                                </h3>
-
-                                <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
-                                    <strong>{queueState.availableSlots}</strong> свободных мест •{' '}
-                                    <strong>{queueState.activeBreaks}</strong> активных перерывов
-                                </div>
-
-                                {/* Моя запись в очереди */}
-                                {queueState.myEntry && (
-                                    <div style={{
-                                        padding: '1rem',
-                                        backgroundColor: queueState.myEntry.status === 'Notified' ? '#fef3c7' : '#f3f4f6',
-                                        borderRadius: '8px',
-                                        marginBottom: '1rem',
-                                        border: queueState.myEntry.status === 'Notified' ? '2px solid #f59e0b' : 'none'
-                                    }}>
-                                        <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
-                                            {queueState.myEntry.status === 'Notified' ? '🔔 Ваша очередь!' : `Позиция: ${queueState.myEntry.position}`}
-                                        </div>
-                                        <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                                            Перерыв: {queueState.myEntry.durationMinutes} мин • Впереди: {queueState.myEntry.position - 1}
-                                        </div>
-
-                                        {queueState.myEntry.status === 'Notified' && (
-                                            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                                                <button
-                                                    onClick={() => handleConfirmBreak(queueState.myEntry!.id)}
-                                                    style={{
-                                                        flex: 1,
-                                                        padding: '0.5rem 1rem',
-                                                        backgroundColor: '#10b981',
-                                                        color: '#fff',
-                                                        border: 'none',
-                                                        borderRadius: '6px',
-                                                        cursor: 'pointer',
-                                                        fontWeight: 600
-                                                    }}
-                                                >
-                                                    Подтвердить
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Кнопка входа в очередь */}
-                                {!isInQueue && !activeBreak && (
-                                    <button
-                                        onClick={handleEnqueueBreak}
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.75rem',
-                                            backgroundColor: '#84cc16',
-                                            color: '#fff',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            fontWeight: 600,
-                                            marginBottom: '1rem'
-                                        }}
-                                    >
-                                        Встать в очередь
-                                    </button>
-                                )}
-
-                                {/* Список очереди */}
-                                {queueState.queue.length > 0 && (
-                                    <div>
-                                        <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: '1rem 0 0.5rem 0' }}>
-                                            Очередь ({queueState.queue.length})
-                                        </h4>
-                                        <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                            {queueState.queue.map(entry => (
-                                                <div key={entry.id} style={{
-                                                    padding: '0.5rem',
-                                                    borderBottom: '1px solid #f3f4f6',
-                                                    fontSize: '0.875rem',
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    backgroundColor: entry.status === 'Notified' ? '#fef3c7' : 'transparent'
-                                                }}>
-                                                    <span>
-                                                        {entry.position}. {entry.userName} {entry.isPriority && '⭐'}
-                                                    </span>
-                                                    <span style={{ color: '#6b7280' }}>
-                                                        {entry.durationMinutes} мин • {entry.status}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                    </div>
+                    <div className="role-group" style={{ marginBottom: 0 }}>
+                        <div className="role-label">Админы</div>
+                        <div className="role-items">
+                            <div className="role-item">
+                                <span className="pill-badge-green">Вася</span>
+                                <span className="tabular-nums fw-medium text-muted">16-00</span>
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

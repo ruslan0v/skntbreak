@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Skntbreak.Core.Entities;
 
@@ -16,6 +11,10 @@ namespace Skntbreak.Infrastructure.Data.Configurations
             builder.HasKey(bpd => bpd.Id);
             builder.Property(bpd => bpd.WorkDate).IsRequired();
             builder.Property(bpd => bpd.Group).IsRequired();
+
+            // Исправленная строка: используем стандартный метод IsRowVersion() 
+            // Npgsql автоматически свяжет это поле типа uint с системной колонкой xmin в PostgreSQL
+            builder.Property(bpd => bpd.Version).IsRowVersion();
         }
     }
 }

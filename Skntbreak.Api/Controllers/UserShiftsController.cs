@@ -251,6 +251,27 @@ namespace Skntbreak.Api.Controllers
             }
         }
 
+        [HttpGet("available")]  // ← ДО [HttpGet("my/{workDate}")]
+        public async Task<IActionResult> GetAvailableSchedules()
+        {
+            try
+            {
+                var schedules = await _shiftService.GetAvailableSchedulesAsync();
+                var result = schedules.Select(s => new
+                {
+                    id = s.Id,
+                    name = s.Name,
+                    startTime = s.StartTime.ToString(@"hh\:mm"),
+                    endTime = s.EndTime.ToString(@"hh\:mm"),
+                    shiftType = s.ShiftType
+                });
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
 
         private int GetCurrentUserId()
         {

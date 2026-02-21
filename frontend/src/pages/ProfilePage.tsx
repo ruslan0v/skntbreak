@@ -19,10 +19,6 @@ export const ProfilePage: React.FC = () => {
     const [editing, setEditing] = useState(false);
     const [newUserName, setNewUserName] = useState('');
 
-    useEffect(() => {
-        loadProfile();
-    }, []);
-
     const loadProfile = async () => {
         try {
             setLoading(true);
@@ -36,271 +32,101 @@ export const ProfilePage: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        loadProfile();
+    }, []); // ✅
+
     const handleUpdateProfile = async () => {
         if (!newUserName.trim()) {
             toast.error('Введите имя');
             return;
         }
-
         try {
             await api.Users.updateProfile({ userName: newUserName });
             toast.success('Профиль обновлён');
             setEditing(false);
             await loadProfile();
         } catch (err: any) {
-            toast.error('Ошибка обновления профиля');
+            toast.error(err.response?.data?.error || 'Ошибка обновления профиля'); // ✅
         }
     };
 
     if (loading) {
-        return (
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <p>Загрузка...</p>
-            </div>
-        );
+        return <div className="text-muted fw-medium" style={{ padding: '40px', textAlign: 'center' }}>Загрузка профиля...</div>;
     }
 
-    if (!profile) {
-        return (
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <p>Профиль не найден</p>
-            </div>
-        );
-    }
+    if (!profile) return null;
 
     return (
-        <div style={{
-            padding: '2rem',
-            maxWidth: '800px',
-            margin: '0 auto',
-            backgroundColor: '#f5f5f5',
-            minHeight: '100vh'
-        }}>
-            <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: '600',
-                color: '#111827',
-                marginBottom: '2rem'
-            }}>
-                Профиль
-            </h2>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <h2 className="day-text" style={{ marginBottom: '32px' }}>Профиль</h2>
 
-            {/* Основная информация */}
-            <div style={{
-                backgroundColor: '#fff',
-                borderRadius: '12px',
-                padding: '2rem',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                marginBottom: '1.5rem'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: '2rem'
-                }}>
-                    <div>
-                        <h3 style={{
-                            fontSize: '1.25rem',
-                            fontWeight: '600',
-                            marginBottom: '0.5rem'
+            <div className="panel-main" style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                        <div style={{
+                            width: '80px', height: '80px', borderRadius: '50%',
+                            backgroundColor: 'var(--bg-surface-side)', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center', fontSize: '32px'
                         }}>
-                            {profile.userName}
-                        </h3>
-                        <p style={{
-                            color: '#6b7280',
-                            fontSize: '0.875rem',
-                            margin: 0
-                        }}>
-                            @{profile.login}
-                        </p>
+                            👤
+                        </div>
+                        <div>
+                            <h3 style={{ margin: '0 0 4px 0', fontSize: '24px', color: '#111827' }}>
+                                {profile.userName}
+                            </h3>
+                            <div className="text-muted fw-medium" style={{ marginBottom: '8px' }}>
+                                @{profile.login}
+                            </div>
+                            <span className="pill-badge-green">{profile.role}</span>
+                        </div>
                     </div>
                     <button
                         onClick={() => setEditing(!editing)}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            backgroundColor: editing ? '#e5e7eb' : '#84cc16',
-                            color: editing ? '#374151' : '#fff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '0.875rem',
-                            fontWeight: '500',
-                            cursor: 'pointer'
-                        }}
+                        className="btn-outline-secondary"
+                        style={{ padding: '8px 16px', fontSize: '14px', width: 'auto' }}
                     >
                         {editing ? 'Отмена' : 'Редактировать'}
                     </button>
                 </div>
 
                 {editing && (
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{
-                            display: 'block',
-                            fontSize: '0.875rem',
-                            fontWeight: '500',
-                            color: '#374151',
-                            marginBottom: '0.5rem'
-                        }}>
+                    <div style={{ marginTop: '32px', borderTop: '1px solid #E5E7EB', paddingTop: '24px' }}>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
                             Имя пользователя
                         </label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', gap: '12px' }}>
                             <input
+                                className="clean-input"
                                 type="text"
                                 value={newUserName}
                                 onChange={(e) => setNewUserName(e.target.value)}
-                                style={{
-                                    flex: 1,
-                                    padding: '0.75rem',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '8px',
-                                    fontSize: '1rem',
-                                    outline: 'none'
-                                }}
                             />
-                            <button
-                                onClick={handleUpdateProfile}
-                                style={{
-                                    padding: '0.75rem 1.5rem',
-                                    backgroundColor: '#84cc16',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    fontSize: '0.875rem',
-                                    fontWeight: '600',
-                                    cursor: 'pointer'
-                                }}
-                            >
+                            <button className="btn-solid-green" onClick={handleUpdateProfile} style={{ width: 'auto', whiteSpace: 'nowrap' }}>
                                 Сохранить
                             </button>
                         </div>
                     </div>
                 )}
-
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '1rem',
-                    paddingTop: '1.5rem',
-                    borderTop: '1px solid #e5e7eb'
-                }}>
-                    <div>
-                        <div style={{
-                            fontSize: '0.75rem',
-                            color: '#6b7280',
-                            marginBottom: '0.25rem'
-                        }}>
-                            Роль
-                        </div>
-                        <div style={{ fontWeight: '500' }}>
-                            {profile.role}
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            {/* Статистика */}
-            <div style={{
-                backgroundColor: '#fff',
-                borderRadius: '12px',
-                padding: '2rem',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-                <h3 style={{
-                    fontSize: '1.125rem',
-                    fontWeight: '600',
-                    marginBottom: '1.5rem'
-                }}>
-                    Статистика
-                </h3>
-
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '1.5rem'
-                }}>
-                    <div style={{
-                        padding: '1.5rem',
-                        backgroundColor: '#f9fafb',
-                        borderRadius: '8px'
-                    }}>
-                        <div style={{
-                            fontSize: '2rem',
-                            fontWeight: '600',
-                            color: '#84cc16',
-                            marginBottom: '0.5rem'
-                        }}>
-                            {profile.totalShifts}
-                        </div>
-                        <div style={{
-                            fontSize: '0.875rem',
-                            color: '#6b7280'
-                        }}>
-                            Всего смен
-                        </div>
-                    </div>
-
-                    <div style={{
-                        padding: '1.5rem',
-                        backgroundColor: '#f9fafb',
-                        borderRadius: '8px'
-                    }}>
-                        <div style={{
-                            fontSize: '2rem',
-                            fontWeight: '600',
-                            color: '#84cc16',
-                            marginBottom: '0.5rem'
-                        }}>
-                            {profile.totalBreaks}
-                        </div>
-                        <div style={{
-                            fontSize: '0.875rem',
-                            color: '#6b7280'
-                        }}>
-                            Всего перерывов
-                        </div>
-                    </div>
-
-                    <div style={{
-                        padding: '1.5rem',
-                        backgroundColor: '#f9fafb',
-                        borderRadius: '8px'
-                    }}>
-                        <div style={{
-                            fontSize: '2rem',
-                            fontWeight: '600',
-                            color: '#10b981',
-                            marginBottom: '0.5rem'
-                        }}>
-                            {profile.completedBreaks}
-                        </div>
-                        <div style={{
-                            fontSize: '0.875rem',
-                            color: '#6b7280'
-                        }}>
-                            Завершённые
-                        </div>
-                    </div>
-
-                    <div style={{
-                        padding: '1.5rem',
-                        backgroundColor: '#f9fafb',
-                        borderRadius: '8px'
-                    }}>
-                        <div style={{
-                            fontSize: '2rem',
-                            fontWeight: '600',
-                            color: '#ef4444',
-                            marginBottom: '0.5rem'
-                        }}>
-                            {profile.skippedBreaks}
-                        </div>
-                        <div style={{
-                            fontSize: '0.875rem',
-                            color: '#6b7280'
-                        }}>
-                            Пропущенные
-                        </div>
-                    </div>
+            <h3 className="fw-bold" style={{ fontSize: '20px', marginBottom: '24px' }}>Статистика</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+                <div className="panel-side" style={{ marginBottom: 0 }}>
+                    <div className="text-muted fw-medium" style={{ fontSize: '14px', marginBottom: '8px' }}>Всего смен</div>
+                    <div className="tabular-nums fw-bold text-main" style={{ fontSize: '40px', lineHeight: 1 }}>{profile.totalShifts}</div>
+                </div>
+                <div className="panel-side" style={{ marginBottom: 0 }}>
+                    <div className="text-muted fw-medium" style={{ fontSize: '14px', marginBottom: '8px' }}>Всего перерывов</div>
+                    <div className="tabular-nums fw-bold text-main" style={{ fontSize: '40px', lineHeight: 1 }}>{profile.totalBreaks}</div>
+                </div>
+                <div className="panel-side" style={{ marginBottom: 0 }}>
+                    <div className="text-muted fw-medium" style={{ fontSize: '14px', marginBottom: '8px' }}>Завершённые перерывы</div>
+                    <div className="tabular-nums fw-bold text-green" style={{ fontSize: '40px', lineHeight: 1 }}>{profile.completedBreaks}</div>
+                </div>
+                <div className="panel-side" style={{ marginBottom: 0 }}>
+                    <div className="text-muted fw-medium" style={{ fontSize: '14px', marginBottom: '8px' }}>Пропущенные перерывы</div>
+                    <div className="tabular-nums fw-bold text-red" style={{ fontSize: '40px', lineHeight: 1 }}>{profile.skippedBreaks}</div>
                 </div>
             </div>
         </div>

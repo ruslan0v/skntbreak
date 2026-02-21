@@ -17,5 +17,7 @@ namespace Skntbreak.Core.Interfaces
         Task<List<UserShift>> GetShiftsByDateAndGroupAsync(DateOnly workDate, ShiftType group);
         Task<List<ColleagueDto>> GetColleaguesAsync(int scheduleId, DateOnly workDate, int currentUserId);
         Task<UserShift> EndShiftAsync(int userId);
+        Task<List<Schedule>> GetAvailableSchedulesAsync();
+
     }
 }

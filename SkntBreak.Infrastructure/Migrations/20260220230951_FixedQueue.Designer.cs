@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SkntBreak.Infrastructure.Data;
@@ -11,9 +12,11 @@ using SkntBreak.Infrastructure.Data;
 namespace Skntbreak.Infrastructure.Migrations
 {
     [DbContext(typeof(SkntbreakDbContext))]
-    partial class SkntbreakDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260220230951_FixedQueue")]
+    partial class FixedQueue
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

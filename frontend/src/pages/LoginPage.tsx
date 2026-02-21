@@ -12,125 +12,66 @@ export const LoginPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-
         try {
             const response = await api.Users.login(login, password);
+            // Сохраняем токен и устанавливаем его в axios
             setAuthToken(response.data.token);
-            localStorage.setItem('authuser', JSON.stringify({ login }));
-            toast.success('Вход выполнен!');
+            toast.success('Вход выполнен успешно!');
             navigate('/dashboard');
         } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Ошибка входа');
+            toast.error(err.response?.data?.error || 'Ошибка авторизации. Проверьте логин и пароль.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#f5f5f5'
-        }}>
-            <div style={{
-                width: '100%',
-                maxWidth: '400px',
-                padding: '2rem'
-            }}>
-                <div style={{
-                    backgroundColor: '#fff',
-                    borderRadius: '12px',
-                    padding: '2rem',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                }}>
-                    <h2 style={{
-                        fontSize: '1.875rem',
-                        fontWeight: '600',
-                        textAlign: 'center',
-                        marginBottom: '2rem',
-                        color: '#111827'
-                    }}>
-                        Skntbreak
-                    </h2>
+        <div className="auth-wrapper">
+            <div className="auth-card">
+                <h2 className="day-text" style={{ textAlign: 'center', marginBottom: '40px', fontSize: '32px' }}>
+                    Вход в систему
+                </h2>
 
-                    <form onSubmit={handleSubmit}>
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '0.875rem',
-                                fontWeight: '500',
-                                color: '#374151',
-                                marginBottom: '0.5rem'
-                            }}>
-                                Логин
-                            </label>
-                            <input
-                                type="text"
-                                value={login}
-                                onChange={(e) => setLogin(e.target.value)}
-                                disabled={loading}
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '8px',
-                                    fontSize: '1rem',
-                                    outline: 'none',
-                                    transition: 'border-color 0.2s'
-                                }}
-                            />
-                        </div>
-
-                        <div style={{ marginBottom: '2rem' }}>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '0.875rem',
-                                fontWeight: '500',
-                                color: '#374151',
-                                marginBottom: '0.5rem'
-                            }}>
-                                Пароль
-                            </label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                disabled={loading}
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '8px',
-                                    fontSize: '1rem',
-                                    outline: 'none'
-                                }}
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
+                <form onSubmit={handleSubmit}>
+                    <div style={{ marginBottom: '24px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151', fontSize: '14px' }}>
+                            Логин
+                        </label>
+                        <input
+                            className="clean-input"
+                            type="text"
+                            placeholder="Введите логин"
+                            value={login}
+                            onChange={e => setLogin(e.target.value)}
+                            required
                             disabled={loading}
-                            style={{
-                                width: '100%',
-                                padding: '0.875rem',
-                                backgroundColor: '#84cc16',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '8px',
-                                fontSize: '1rem',
-                                fontWeight: '600',
-                                cursor: loading ? 'not-allowed' : 'pointer',
-                                opacity: loading ? 0.6 : 1,
-                                transition: 'opacity 0.2s'
-                            }}
-                        >
-                            {loading ? 'Вход...' : 'Войти'}
-                        </button>
-                    </form>
+                        />
+                    </div>
+
+                    <div style={{ marginBottom: '32px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151', fontSize: '14px' }}>
+                            Пароль
+                        </label>
+                        <input
+                            className="clean-input"
+                            type="password"
+                            placeholder="Введите пароль"
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            required
+                            disabled={loading}
+                        />
+                    </div>
+
+                    <button className="btn-solid-green" type="submit" disabled={loading} style={{ width: '100%' }}>
+                        {loading ? 'Загрузка...' : 'Войти'}
+                    </button>
+                </form>
+
+                <div style={{ textAlign: 'center', marginTop: '32px' }}>
+                    <Link to="/register" className="text-muted fw-medium" style={{ textDecoration: 'none', transition: 'color 0.2s' }}>
+                        Нет аккаунта? <span className="text-green">Зарегистрироваться</span>
+                    </Link>
                 </div>
             </div>
         </div>

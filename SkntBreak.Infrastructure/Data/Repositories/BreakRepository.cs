@@ -174,31 +174,32 @@ namespace SkntBreak.Infrastructure.Data.Repositories
         {
             var breakEntity = await _context.Breaks
                 .Include(b => b.UserShift)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(b => b.Id == brk.Id);
+                .FirstOrDefaultAsync(b => b.Id == brk.Id);  // ← убрать AsNoTracking
 
             if (breakEntity == null)
-                throw new InvalidOperationException($"Перерыв с Id {brk.Id} не найден");
+                throw new InvalidOperationException($"Break с Id {brk.Id} не найден");
 
-            // Проверяем только если мы СОЗДАЁМ новый активный перерыв
-            // НЕ проверяем если завершаем существующий
             if (brk.Status == BreakStatus.Taken && breakEntity.Status != BreakStatus.Taken)
             {
-                // Только при переходе в Taken проверяем, нет ли уже активного перерыва
                 var hasActiveBreak = await _context.Breaks
-                    .Include(b => b.UserShift)
-                    .AnyAsync(b =>
-                        b.UserShift.UserId == breakEntity.UserShift.UserId &&
-                        b.Status == BreakStatus.Taken &&
-                        b.Id != brk.Id);
-
+                    .AnyAsync(b => b.UserShift.UserId == breakEntity.UserShift.UserId
+                                && b.Status == BreakStatus.Taken
+                                && b.Id != brk.Id);
                 if (hasActiveBreak)
-                    throw new InvalidOperationException("У пользователя уже есть активный перерыв");
+                    throw new InvalidOperationException("Уже есть активный перерыв");
             }
 
-            _context.Breaks.Update(brk);
+            // Обновляем поля через уже отслеживаемую сущность — без context.Update()
+            breakEntity.Status = brk.Status;
+            breakEntity.EndTime = brk.EndTime;
+            breakEntity.DurationMinutes = brk.DurationMinutes;
+            breakEntity.BreakNumber = brk.BreakNumber;
+            breakEntity.StartTime = brk.StartTime;
+            breakEntity.WorkDate = brk.WorkDate;
+
             await _context.SaveChangesAsync();
         }
+
 
 
         public async Task DeleteAsync(int id)

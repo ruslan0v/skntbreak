@@ -9,6 +9,7 @@ namespace Skntbreak.Core.Interfaces
         Task<List<BreakQueue>> GetQueueAsync(DateOnly workDate, ShiftType group, int breakRound);
         Task<BreakQueue?> GetUserEntryAsync(int userShiftId, int breakRound);
         Task<BreakQueue?> GetNextWaitingAsync(DateOnly workDate, ShiftType group, int breakRound);
+        Task<BreakQueue?> GetNextEligibleWaitingAsync(DateOnly workDate, ShiftType group, int breakRound, TimeSpan interval); // НОВЫЙ МЕТОД
         Task<int> GetMaxPositionAsync(DateOnly workDate, ShiftType group, int breakRound);
         Task<bool> IsRoundCompleteAsync(DateOnly workDate, ShiftType group, int breakRound, int totalUsersInShift);
         Task<List<BreakQueue>> GetExpiredNotificationsAsync(TimeSpan timeout);

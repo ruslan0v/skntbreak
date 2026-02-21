@@ -1,6 +1,6 @@
 ﻿import axios, { AxiosInstance, AxiosError } from 'axios';
-import toast from 'react-hot-toast';
 
+// Базовый URL API (замените на ваш продакшен URL при деплое)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7059/api';
 
 const apiClient: AxiosInstance = axios.create({
@@ -11,7 +11,7 @@ const apiClient: AxiosInstance = axios.create({
     },
 });
 
-// Request interceptor
+// Перехватчик для добавления JWT токена во все запросы
 apiClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -23,7 +23,7 @@ apiClient.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// Перехватчик ответов для обработки просроченного токена (401)
 apiClient.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
@@ -35,6 +35,7 @@ apiClient.interceptors.response.use(
     }
 );
 
+// Утилиты авторизации
 export const setAuthToken = (token: string) => {
     apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     localStorage.setItem('token', token);
@@ -43,15 +44,34 @@ export const setAuthToken = (token: string) => {
 export const clearAuth = () => {
     delete apiClient.defaults.headers.common['Authorization'];
     localStorage.removeItem('token');
-    localStorage.removeItem('authuser');
 };
 
-// API endpoints
+// ========================================
+// ПОЛНЫЙ КЛИЕНТ API
+// ========================================
 export const api = {
-    // === SHIFTS ===
+    // Авторизация и профиль (UsersController)
+    Users: {
+        login: (login: string, password: string) =>
+            apiClient.post('/Users/login', { login, password }),
+
+        register: (userName: string, login: string, password: string) =>
+            apiClient.post('/Users/register', { userName, login, password }),
+
+        getProfile: () =>
+            apiClient.get('/Users/profile'),
+
+        updateProfile: (data: { userName?: string }) =>
+            apiClient.put('/Users/profile', data),
+    },
+
+    // Управление сменами (UserShiftsController)
     Shifts: {
-        startShift: (data: { scheduleId: number; workDate?: string }) =>
-            apiClient.post('/UserShifts/start', data),  // ✅ БЕЗ дефиса!
+        getAvailableSchedules: () =>
+            apiClient.get('/UserShifts/available'),
+
+        startShift: (data: { scheduleId: number }) =>
+            apiClient.post('/UserShifts/start', data),
 
         endShift: () =>
             apiClient.post('/UserShifts/end'),
@@ -66,15 +86,34 @@ export const api = {
             apiClient.delete(`/UserShifts/${id}`),
 
         getColleagues: (scheduleId: number, workDate: string) =>
-            apiClient.get('/UserShifts/colleagues', {
-                params: { scheduleId, workDate },
-            }),
+            apiClient.get('/UserShifts/colleagues', { params: { scheduleId, workDate } }),
+
+        getShiftsByDateAndGroup: (workDate: string, group: string) =>
+            apiClient.get(`/UserShifts/by-date-group/${workDate}/${group}`)
     },
 
-    // === QUEUE ===
+    // Расписания (ScheduleController)
+    Schedules: {
+        getAllSchedules: () =>
+            apiClient.get('/Schedule/getall'),
+
+        getSchedule: (id: number) =>
+            apiClient.get(`/Schedule/${id}`),
+
+        createSchedule: (data: { name: string; startTime: string; endTime: string; shiftType?: number; }) =>
+            apiClient.post('/Schedule/create', data),
+
+        updateSchedule: (id: number, data: { name?: string; startTime?: string; endTime?: string; shiftType?: number; }) =>
+            apiClient.put(`/Schedule/update/${id}`, data),
+
+        deleteSchedule: (id: number) =>
+            apiClient.delete(`/Schedule/${id}`),
+    },
+
+    // Очередь (BreakQueueController)
     Queue: {
         enqueue: (durationMinutes?: number) =>
-            apiClient.post('/BreakQueue/enqueue', { durationMinutes }),  // ✅ БЕЗ дефиса!
+            apiClient.post('/BreakQueue/enqueue', { durationMinutes }),
 
         getState: () =>
             apiClient.get('/BreakQueue/state'),
@@ -92,50 +131,7 @@ export const api = {
             apiClient.post(`/BreakQueue/priority/${targetUserId}`, { durationMinutes }),
     },
 
-    // === SCHEDULES ===
-    Schedules: {
-        getAllSchedules: () =>
-            apiClient.get('/Schedule/getall'),  // ✅ БЕЗ 's'
-
-        getSchedule: (id: number) =>
-            apiClient.get(`/Schedule/${id}`),
-
-        createSchedule: (data: {
-            name: string;
-            startTime: string;
-            endTime: string;
-            shiftType?: number;
-        }) =>
-            apiClient.post('/Schedule/create', data),
-
-        updateSchedule: (id: number, data: {
-            name?: string;
-            startTime?: string;
-            endTime?: string;
-            shiftType?: number;
-        }) =>
-            apiClient.put(`/Schedule/update/${id}`, data),
-
-        deleteSchedule: (id: number) =>
-            apiClient.post(`/Schedule/${id}`),
-    },
-
-    // === USERS ===
-    Users: {
-        login: (login: string, password: string) =>
-            apiClient.post('/Users/login', { login, password }),
-
-        register: (userName: string, login: string, password: string) =>
-            apiClient.post('/Users/register', { userName, login, password }),
-
-        getProfile: () =>
-            apiClient.get('/Users/profile'),
-
-        updateProfile: (data: { userName?: string }) =>
-            apiClient.put('/Users/profile', data),
-    },
-
-    // === BREAKS ===
+    // Перерывы (BreaksController)
     Breaks: {
         startBreak: (data: { breakNumber: number; durationMinutes: number }) =>
             apiClient.post('/Breaks/start', data),
@@ -159,7 +155,7 @@ export const api = {
             apiClient.get(`/Breaks/pool-info?date=${date}`),
     },
 
-    // === ADMIN ===
+    // Административная панель (AdminController)
     Admin: {
         getDashboardStats: () =>
             apiClient.get('/Admin/stats'),
@@ -173,20 +169,10 @@ export const api = {
         getUserById: (id: number) =>
             apiClient.get(`/Admin/users/${id}`),
 
-        createUser: (data: {
-            userName: string;
-            login: string;
-            password: string;
-            role: string;
-        }) =>
+        createUser: (data: { userName: string; login: string; password: string; role: string; }) =>
             apiClient.post('/Admin/users', data),
 
-        updateUser: (id: number, data: {
-            userName?: string;
-            login?: string;
-            password?: string;
-            role?: string;
-        }) =>
+        updateUser: (id: number, data: { userName?: string; login?: string; password?: string; role?: string; }) =>
             apiClient.put(`/Admin/users/${id}`, data),
 
         deleteUser: (id: number) =>
@@ -195,31 +181,13 @@ export const api = {
         getAllBreakPools: () =>
             apiClient.get('/Admin/break-pools'),
 
-        createBreakPool: (data: {
-            workDate: string;
-            group: number;
-            maxCurrentBreaks: number;
-        }) =>
+        createBreakPool: (data: { workDate: string; group: number; maxCurrentBreaks: number; }) =>
             apiClient.post('/Admin/break-pools', data),
 
-        getAllSchedulesAdmin: () =>
-            apiClient.get('/Admin/schedules'),
-
-        createScheduleAdmin: (data: {
-            name: string;
-            startTime: string;
-            endTime: string;
-            shiftType: number;
-        }) =>
-            apiClient.post('/Admin/schedules', data),
-
-        deleteScheduleAdmin: (id: number) =>
-            apiClient.delete(`/Admin/schedules/${id}`),
+        getBreakPool: (date: string, shift: number) =>
+            apiClient.get(`/Admin/break-pools/${date}/${shift}`),
 
         endUserShift: (userShiftId: number) =>
             apiClient.post(`/Admin/shifts/${userShiftId}/end`),
     },
 };
-
-
-export default apiClient;
