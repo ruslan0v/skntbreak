@@ -1,4 +1,4 @@
-import axiosInstance from './api';
+ï»¿import axiosInstance from './api';
 import { Break, StartBreakRequest, SkipBreakRequest } from '../types/break.types';
 
 export const breaksService = {
@@ -24,12 +24,12 @@ export const breaksService = {
 
     getBreakStatusText: (status: number): string => {
         const statuses: Record<number, string> = {
-            0: 'Äîñòóïåí',
-            1: 'Â ïðîöåññå',
-            2: 'Çàâåðøåí',
-            3: 'Ïðîïóùåí'
+            0: 'Ð”Ð¾ÑÑ‚ÑƒÐ¿ÐµÐ½',
+            1: 'Ð’ Ð¿Ñ€Ð¾Ñ†ÐµÑÑÐµ',
+            2: 'Ð—Ð°Ð²ÐµÑ€ÑˆÐµÐ½',
+            3: 'ÐŸÑ€Ð¾Ð¿ÑƒÑ‰ÐµÐ½'
         };
-        return statuses[status] || 'Íåèçâåñòíî';
+        return statuses[status] || 'ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð¾';
     },
 
     getBreakStatusClass: (status: number): string => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../api/client';
 import toast from 'react-hot-toast';
@@ -15,17 +15,17 @@ export const RegisterPage: React.FC = () => {
         e.preventDefault();
 
         if (password !== confirmPassword) {
-            toast.error('Пароли не совпадают');
+            toast.error('РџР°СЂРѕР»Рё РЅРµ СЃРѕРІРїР°РґР°СЋС‚');
             return;
         }
 
         setLoading(true);
         try {
             await api.Users.register(userName, login, password);
-            toast.success('Регистрация успешна! Теперь вы можете войти.');
+            toast.success('Р РµРіРёСЃС‚СЂР°С†РёСЏ СѓСЃРїРµС€РЅР°! РўРµРїРµСЂСЊ РІС‹ РјРѕР¶РµС‚Рµ РІРѕР№С‚Рё.');
             navigate('/login');
         } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Ошибка при регистрации');
+            toast.error(err.response?.data?.error || 'РћС€РёР±РєР° РїСЂРё СЂРµРіРёСЃС‚СЂР°С†РёРё');
         } finally {
             setLoading(false);
         }
@@ -35,18 +35,18 @@ export const RegisterPage: React.FC = () => {
         <div className="auth-wrapper">
             <div className="auth-card">
                 <h2 className="day-text" style={{ textAlign: 'center', marginBottom: '40px', fontSize: '32px' }}>
-                    Регистрация
+                    Р РµРіРёСЃС‚СЂР°С†РёСЏ
                 </h2>
 
                 <form onSubmit={handleSubmit}>
                     <div style={{ marginBottom: '20px' }}>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151', fontSize: '14px' }}>
-                            Имя пользователя (Отображаемое)
+                            РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ (РћС‚РѕР±СЂР°Р¶Р°РµРјРѕРµ)
                         </label>
                         <input
                             className="clean-input"
                             type="text"
-                            placeholder="Например: Иван Иванов"
+                            placeholder="РќР°РїСЂРёРјРµСЂ: РРІР°РЅ РРІР°РЅРѕРІ"
                             value={userName}
                             onChange={e => setUserName(e.target.value)}
                             required
@@ -56,7 +56,7 @@ export const RegisterPage: React.FC = () => {
 
                     <div style={{ marginBottom: '20px' }}>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151', fontSize: '14px' }}>
-                            Логин
+                            Р›РѕРіРёРЅ
                         </label>
                         <input
                             className="clean-input"
@@ -71,12 +71,12 @@ export const RegisterPage: React.FC = () => {
 
                     <div style={{ marginBottom: '20px' }}>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151', fontSize: '14px' }}>
-                            Пароль
+                            РџР°СЂРѕР»СЊ
                         </label>
                         <input
                             className="clean-input"
                             type="password"
-                            placeholder="Минимум 6 символов"
+                            placeholder="РњРёРЅРёРјСѓРј 6 СЃРёРјРІРѕР»РѕРІ"
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             required
@@ -86,12 +86,12 @@ export const RegisterPage: React.FC = () => {
 
                     <div style={{ marginBottom: '32px' }}>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151', fontSize: '14px' }}>
-                            Подтвердите пароль
+                            РџРѕРґС‚РІРµСЂРґРёС‚Рµ РїР°СЂРѕР»СЊ
                         </label>
                         <input
                             className="clean-input"
                             type="password"
-                            placeholder="Повторите пароль"
+                            placeholder="РџРѕРІС‚РѕСЂРёС‚Рµ РїР°СЂРѕР»СЊ"
                             value={confirmPassword}
                             onChange={e => setConfirmPassword(e.target.value)}
                             required
@@ -100,13 +100,13 @@ export const RegisterPage: React.FC = () => {
                     </div>
 
                     <button className="btn-solid-green" type="submit" disabled={loading} style={{ width: '100%' }}>
-                        {loading ? 'Создание...' : 'Создать аккаунт'}
+                        {loading ? 'РЎРѕР·РґР°РЅРёРµ...' : 'РЎРѕР·РґР°С‚СЊ Р°РєРєР°СѓРЅС‚'}
                     </button>
                 </form>
 
                 <div style={{ textAlign: 'center', marginTop: '32px' }}>
                     <Link to="/login" className="text-muted fw-medium" style={{ textDecoration: 'none', transition: 'color 0.2s' }}>
-                        Уже есть аккаунт? <span className="text-green">Войти</span>
+                        РЈР¶Рµ РµСЃС‚СЊ Р°РєРєР°СѓРЅС‚? <span className="text-green">Р’РѕР№С‚Рё</span>
                     </Link>
                 </div>
             </div>

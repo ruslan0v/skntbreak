@@ -1,15 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+п»ї@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    /* Цветовая палитра на основе макета */
+    /* Р¦РІРµС‚РѕРІР°СЏ РїР°Р»РёС‚СЂР° РЅР° РѕСЃРЅРѕРІРµ РјР°РєРµС‚Р° */
     --bg-global: #FFFFFF;
-    --bg-surface-main: #F8F9FB; /* Очень светлый серо-голубой для центральной панели */
-    --bg-surface-side: #F4F5F7; /* Светло-серый для боковых панелей */
+    --bg-surface-main: #F8F9FB; /* РћС‡РµРЅСЊ СЃРІРµС‚Р»С‹Р№ СЃРµСЂРѕ-РіРѕР»СѓР±РѕР№ РґР»СЏ С†РµРЅС‚СЂР°Р»СЊРЅРѕР№ РїР°РЅРµР»Рё */
+    --bg-surface-side: #F4F5F7; /* РЎРІРµС‚Р»Рѕ-СЃРµСЂС‹Р№ РґР»СЏ Р±РѕРєРѕРІС‹С… РїР°РЅРµР»РµР№ */
 
     --text-primary: #111827;
     --text-secondary: #6B7280;
-    --status-green: #7CCC63; /* Зеленый "В линии" и часы */
-    --status-red: #C13333; /* Красный "Перерыв" и кнопка "На месте" */
+    --status-green: #7CCC63; /* Р—РµР»РµРЅС‹Р№ "Р’ Р»РёРЅРёРё" Рё С‡Р°СЃС‹ */
+    --status-red: #C13333; /* РљСЂР°СЃРЅС‹Р№ "РџРµСЂРµСЂС‹РІ" Рё РєРЅРѕРїРєР° "РќР° РјРµСЃС‚Рµ" */
 
     --queue-alert-bg: #FFFBEB;
     --queue-alert-border: #FEF08A;
@@ -29,7 +29,7 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Глобальный Layout приложения */
+/* Р“Р»РѕР±Р°Р»СЊРЅС‹Р№ Layout РїСЂРёР»РѕР¶РµРЅРёСЏ */
 .app {
     min-height: 100vh;
     display: flex;
@@ -51,7 +51,7 @@ body {
     box-sizing: border-box;
 }
 
-/* Верхний колонтитул (Хедер с часами) */
+/* Р’РµСЂС…РЅРёР№ РєРѕР»РѕРЅС‚РёС‚СѓР» (РҐРµРґРµСЂ СЃ С‡Р°СЃР°РјРё) */
 .header-container {
     display: flex;
     justify-content: space-between;
@@ -127,15 +127,15 @@ body {
         color: var(--bg-global);
     }
 
-/* Сетка дашборда */
+/* РЎРµС‚РєР° РґР°С€Р±РѕСЂРґР° */
 .dashboard-layout {
     display: grid;
-    grid-template-columns: 1fr 340px; /* Левая часть тянется, правая фиксированная */
+    grid-template-columns: 1fr 340px; /* Р›РµРІР°СЏ С‡Р°СЃС‚СЊ С‚СЏРЅРµС‚СЃСЏ, РїСЂР°РІР°СЏ С„РёРєСЃРёСЂРѕРІР°РЅРЅР°СЏ */
     gap: 40px;
     align-items: start;
 }
 
-/* Карточки и панели */
+/* РљР°СЂС‚РѕС‡РєРё Рё РїР°РЅРµР»Рё */
 .panel-main {
     background-color: var(--bg-surface-main);
     border-radius: var(--radius-large);
@@ -149,7 +149,7 @@ body {
     margin-bottom: 24px;
 }
 
-/* Таблицы (без рамок, как на макете) */
+/* РўР°Р±Р»РёС†С‹ (Р±РµР· СЂР°РјРѕРє, РєР°Рє РЅР° РјР°РєРµС‚Рµ) */
 .borderless-table {
     width: 100%;
     border-collapse: collapse;
@@ -182,7 +182,7 @@ body {
     font-size: 18px;
 }
 
-/* Типографика и утилиты */
+/* РўРёРїРѕРіСЂР°С„РёРєР° Рё СѓС‚РёР»РёС‚С‹ */
 .text-green {
     color: var(--status-green);
 }
@@ -223,7 +223,7 @@ body {
     margin-left: 8px;
 }
 
-/* Боковая карточка "Смена" */
+/* Р‘РѕРєРѕРІР°СЏ РєР°СЂС‚РѕС‡РєР° "РЎРјРµРЅР°" */
 .shift-status-card {
     display: flex;
     flex-direction: column;
@@ -253,7 +253,7 @@ body {
     line-height: 1;
 }
 
-/* Кнопки */
+/* РљРЅРѕРїРєРё */
 .btn-solid-red {
     background-color: var(--status-red);
     color: white;
@@ -323,7 +323,7 @@ body {
         background-color: #F3F4F6;
     }
 
-/* Блок "Сегодня на смене" и Pill-бейджи */
+/* Р‘Р»РѕРє "РЎРµРіРѕРґРЅСЏ РЅР° СЃРјРµРЅРµ" Рё Pill-Р±РµР№РґР¶Рё */
 .roles-title {
     font-size: 18px;
     font-weight: 700;
@@ -361,7 +361,7 @@ body {
     font-weight: 600;
 }
 
-/* Стили Очереди */
+/* РЎС‚РёР»Рё РћС‡РµСЂРµРґРё */
 .queue-alert-box {
     background-color: var(--queue-alert-bg);
     border: 1px solid var(--queue-alert-border);
@@ -387,7 +387,7 @@ body {
     gap: 8px;
 }
 
-/* Формы и инпуты (для админки и логина) */
+/* Р¤РѕСЂРјС‹ Рё РёРЅРїСѓС‚С‹ (РґР»СЏ Р°РґРјРёРЅРєРё Рё Р»РѕРіРёРЅР°) */
 .clean-input {
     width: 100%;
     padding: 16px;
@@ -403,7 +403,7 @@ body {
         border-color: var(--status-green);
     }
 
-/* Вкладки для админки */
+/* Р’РєР»Р°РґРєРё РґР»СЏ Р°РґРјРёРЅРєРё */
 .tab-button {
     padding: 12px 24px;
     border-radius: var(--radius-pill);
@@ -421,7 +421,7 @@ body {
         color: white;
     }
 
-/* Страницы авторизации */
+/* РЎС‚СЂР°РЅРёС†С‹ Р°РІС‚РѕСЂРёР·Р°С†РёРё */
 .auth-wrapper {
     display: flex;
     flex-direction: column;

@@ -1,93 +1,37 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { AdminPage } from './pages/AdminPage';
-import { Header } from './components/Header';
-import './App.css';
-
-// Простая проверка наличия JWT токена в localStorage
-const isAuthenticated = (): boolean => {
-    return !!localStorage.getItem('token');
-};
-
-// Компонент-защитник маршрутов
-const RequireAuth = () => {
-    if (!isAuthenticated()) {
-        return <Navigate to="/login" replace />;
-    }
-    return <Outlet />;
-};
-
-// Главная оболочка (Layout) приложения для авторизованных пользователей
-const AppShell = () => {
-    return (
-        <div className="app">
-            <div className="app__main">
-                {/* Хедер с часами и профилем теперь заменяет боковое меню */}
-                <Header />
-                <main className="app__content">
-                    <Outlet />
-                </main>
-            </div>
-        </div>
-    );
-};
+п»їimport { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import RequireAuth from "./components/layout/RequireAuth";
+import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./pages/DashboardPage";
+import ShiftsPage from "./pages/ShiftsPage";
+import ProfilePage from "./pages/ProfilePage";
+import AdminPage from "./pages/admin/AdminPage";
+import AdminOverview from "./pages/admin/AdminOverview";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminSchedules from "./pages/admin/AdminSchedules";
+import AdminPools from "./pages/admin/AdminPools";
 
 export default function App() {
-    return (
-        <>
-            {/* Глобальная настройка уведомлений под новую светлую стилистику */}
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    style: {
-                        borderRadius: '16px',
-                        background: '#F8F9FB', // Подложка как у основных карточек
-                        color: '#111827',
-                        fontWeight: 500,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                        padding: '16px 24px',
-                    },
-                    success: {
-                        iconTheme: {
-                            primary: '#7CCC63',
-                            secondary: '#FFFFFF',
-                        },
-                    },
-                    error: {
-                        iconTheme: {
-                            primary: '#C13333',
-                            secondary: '#FFFFFF',
-                        },
-                    },
-                }}
-            />
-
-            <BrowserRouter>
-                <Routes>
-                    {/* Публичные маршруты аутентификации */}
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
-
-                    {/* Защищенные маршруты (доступны только после входа) */}
-                    <Route element={<RequireAuth />}>
-                        <Route element={<AppShell />}>
-                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                            <Route path="/dashboard" element={<DashboardPage />} />
-                            <Route path="/profile" element={<ProfilePage />} />
-                            <Route path="/admin" element={<AdminPage />} />
-                        </Route>
-                    </Route>
-
-                    {/* Перехват неизвестных URL-адресов */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </BrowserRouter>
-        </>
-    );
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/shifts" element={<ShiftsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/admin" element={<AdminPage />}>
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path="overview" element={<AdminOverview />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="schedules" element={<AdminSchedules />} />
+              <Route path="pools" element={<AdminPools />} />
+            </Route>
+          </Route>
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
 }

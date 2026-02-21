@@ -1,4 +1,4 @@
-import apiClient from '../api/client';  
+п»їimport apiClient from '../api/client';  
 import {
     AdminUserDto,
     CreateUserAdminDto,
@@ -13,7 +13,7 @@ import {
 } from '../types/admin';
 
 export const adminService = {
-    // Статистика
+    // РЎС‚Р°С‚РёСЃС‚РёРєР°
     getDashboardStats: async (): Promise<DashboardStatsDto> => {
         const response = await apiClient.get('/admin/stats');
         return response.data;
@@ -24,7 +24,7 @@ export const adminService = {
         return response.data;
     },
 
-    // Пользователи
+    // РџРѕР»СЊР·РѕРІР°С‚РµР»Рё
     getAllUsers: async (): Promise<AdminUserDto[]> => {
         const response = await apiClient.get('/admin/users');
         return response.data;
@@ -49,7 +49,7 @@ export const adminService = {
         await apiClient.delete(`/admin/users/${userId}`);
     },
 
-    // Расписания
+    // Р Р°СЃРїРёСЃР°РЅРёСЏ
     getAllSchedules: async (): Promise<Schedule[]> => {
         const response = await apiClient.get('/admin/schedules');
         return response.data;
@@ -74,7 +74,7 @@ export const adminService = {
         await apiClient.delete(`/admin/schedules/${id}`);
     },
 
-    // Пулы перерывов
+    // РџСѓР»С‹ РїРµСЂРµСЂС‹РІРѕРІ
     getAllBreakPools: async (): Promise<BreakPoolDayDto[]> => {
         const response = await apiClient.get('/admin/break-pools');
         return response.data;

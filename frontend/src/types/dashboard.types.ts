@@ -1,4 +1,4 @@
-import { Break } from './break.types';
+﻿import { Break } from './break.types';
 
 export type ShiftType = 'Day' | 'Evening';
 

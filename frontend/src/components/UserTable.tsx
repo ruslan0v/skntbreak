@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { UserShift } from '../types/dashboard.types';
 import { breaksService } from '../services/breaksService';
 
@@ -9,7 +9,7 @@ interface UserTableProps {
 
 export const UserTable: React.FC<UserTableProps> = ({ data, onDelete }) => {
     const handleDelete = async (id: number) => {
-        if (window.confirm('Вы уверены?')) {
+        if (window.confirm('Р’С‹ СѓРІРµСЂРµРЅС‹?')) {
             try {
                 await onDelete?.(id);
             } catch (error) {
@@ -23,17 +23,17 @@ export const UserTable: React.FC<UserTableProps> = ({ data, onDelete }) => {
             <table className="table">
                 <thead>
                     <tr>
-                        <th>Дата</th>
-                        <th>Смена</th>
-                        <th>Расписание</th>
-                        <th>Перерывы</th>
-                        <th>Действия</th>
+                        <th>Р”Р°С‚Р°</th>
+                        <th>РЎРјРµРЅР°</th>
+                        <th>Р Р°СЃРїРёСЃР°РЅРёРµ</th>
+                        <th>РџРµСЂРµСЂС‹РІС‹</th>
+                        <th>Р”РµР№СЃС‚РІРёСЏ</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td colSpan={5} style={{ textAlign: 'center', color: '#9ca3af' }}>
-                            Нет данных
+                            РќРµС‚ РґР°РЅРЅС‹С…
                         </td>
                     </tr>
                 </tbody>
@@ -45,18 +45,18 @@ export const UserTable: React.FC<UserTableProps> = ({ data, onDelete }) => {
         <table className="table">
             <thead>
                 <tr>
-                    <th>Дата</th>
-                    <th>Смена</th>
-                    <th>Расписание</th>
-                    <th>Перерывы</th>
-                    <th>Действия</th>
+                    <th>Р”Р°С‚Р°</th>
+                    <th>РЎРјРµРЅР°</th>
+                    <th>Р Р°СЃРїРёСЃР°РЅРёРµ</th>
+                    <th>РџРµСЂРµСЂС‹РІС‹</th>
+                    <th>Р”РµР№СЃС‚РІРёСЏ</th>
                 </tr>
             </thead>
             <tbody>
                 {data.map((shift) => (
                     <tr key={shift.id}>
                         <td>{shift.workDate}</td>
-                        <td>{shift.group === 'Day' ? 'День' : 'Вечер'}</td>
+                        <td>{shift.group === 'Day' ? 'Р”РµРЅСЊ' : 'Р’РµС‡РµСЂ'}</td>
                         <td>{shift.schedule?.name || '-'}</td>
                         <td>
                             {shift.breaks?.length || 0} / {shift.breaks?.filter(b => b.status === 2).length || 0}
@@ -66,7 +66,7 @@ export const UserTable: React.FC<UserTableProps> = ({ data, onDelete }) => {
                                 className="btn btn-danger btn-small"
                                 onClick={() => handleDelete(shift.id)}
                             >
-                                Удалить
+                                РЈРґР°Р»РёС‚СЊ
                             </button>
                         </td>
                     </tr>

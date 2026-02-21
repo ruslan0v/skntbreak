@@ -1,4 +1,4 @@
-export interface Break {
+﻿export interface Break {
     id: number;
     userShiftId: number;
     status: 'Available' | 'Taken' | 'Finished' | 'Skipped';

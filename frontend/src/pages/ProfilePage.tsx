@@ -1,134 +1,69 @@
-﻿import React, { useState, useEffect } from 'react';
-import { api } from '../api/client';
-import toast from 'react-hot-toast';
+﻿import { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { authApi } from "../api/auth";
 
-interface UserProfile {
-    id: number;
-    userName: string;
-    login: string;
-    role: string;
-    totalShifts: number;
-    totalBreaks: number;
-    completedBreaks: number;
-    skippedBreaks: number;
-}
+export default function ProfilePage() {
+  const { user, refreshProfile } = useAuth();
+  const [name, setName] = useState(user?.userName ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-export const ProfilePage: React.FC = () => {
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [editing, setEditing] = useState(false);
-    const [newUserName, setNewUserName] = useState('');
+  const save = async () => {
+    setSaving(true);
+    try {
+      await authApi.updateProfile({ userName: name });
+      await refreshProfile();
+      setSaved(true); setTimeout(() => setSaved(false), 2000);
+    } catch (e: any) { alert(e.response?.data?.error ?? "Error"); }
+    finally { setSaving(false); }
+  };
 
-    const loadProfile = async () => {
-        try {
-            setLoading(true);
-            const response = await api.Users.getProfile();
-            setProfile(response.data);
-            setNewUserName(response.data.userName);
-        } catch (err: any) {
-            toast.error('Ошибка загрузки профиля');
-        } finally {
-            setLoading(false);
-        }
-    };
+  if (!user) return null;
 
-    useEffect(() => {
-        loadProfile();
-    }, []); // ✅
-
-    const handleUpdateProfile = async () => {
-        if (!newUserName.trim()) {
-            toast.error('Введите имя');
-            return;
-        }
-        try {
-            await api.Users.updateProfile({ userName: newUserName });
-            toast.success('Профиль обновлён');
-            setEditing(false);
-            await loadProfile();
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Ошибка обновления профиля'); // ✅
-        }
-    };
-
-    if (loading) {
-        return <div className="text-muted fw-medium" style={{ padding: '40px', textAlign: 'center' }}>Загрузка профиля...</div>;
-    }
-
-    if (!profile) return null;
-
-    return (
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <h2 className="day-text" style={{ marginBottom: '32px' }}>Профиль</h2>
-
-            <div className="panel-main" style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-                        <div style={{
-                            width: '80px', height: '80px', borderRadius: '50%',
-                            backgroundColor: 'var(--bg-surface-side)', display: 'flex',
-                            alignItems: 'center', justifyContent: 'center', fontSize: '32px'
-                        }}>
-                            👤
-                        </div>
-                        <div>
-                            <h3 style={{ margin: '0 0 4px 0', fontSize: '24px', color: '#111827' }}>
-                                {profile.userName}
-                            </h3>
-                            <div className="text-muted fw-medium" style={{ marginBottom: '8px' }}>
-                                @{profile.login}
-                            </div>
-                            <span className="pill-badge-green">{profile.role}</span>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setEditing(!editing)}
-                        className="btn-outline-secondary"
-                        style={{ padding: '8px 16px', fontSize: '14px', width: 'auto' }}
-                    >
-                        {editing ? 'Отмена' : 'Редактировать'}
-                    </button>
-                </div>
-
-                {editing && (
-                    <div style={{ marginTop: '32px', borderTop: '1px solid #E5E7EB', paddingTop: '24px' }}>
-                        <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
-                            Имя пользователя
-                        </label>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <input
-                                className="clean-input"
-                                type="text"
-                                value={newUserName}
-                                onChange={(e) => setNewUserName(e.target.value)}
-                            />
-                            <button className="btn-solid-green" onClick={handleUpdateProfile} style={{ width: 'auto', whiteSpace: 'nowrap' }}>
-                                Сохранить
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            <h3 className="fw-bold" style={{ fontSize: '20px', marginBottom: '24px' }}>Статистика</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
-                <div className="panel-side" style={{ marginBottom: 0 }}>
-                    <div className="text-muted fw-medium" style={{ fontSize: '14px', marginBottom: '8px' }}>Всего смен</div>
-                    <div className="tabular-nums fw-bold text-main" style={{ fontSize: '40px', lineHeight: 1 }}>{profile.totalShifts}</div>
-                </div>
-                <div className="panel-side" style={{ marginBottom: 0 }}>
-                    <div className="text-muted fw-medium" style={{ fontSize: '14px', marginBottom: '8px' }}>Всего перерывов</div>
-                    <div className="tabular-nums fw-bold text-main" style={{ fontSize: '40px', lineHeight: 1 }}>{profile.totalBreaks}</div>
-                </div>
-                <div className="panel-side" style={{ marginBottom: 0 }}>
-                    <div className="text-muted fw-medium" style={{ fontSize: '14px', marginBottom: '8px' }}>Завершённые перерывы</div>
-                    <div className="tabular-nums fw-bold text-green" style={{ fontSize: '40px', lineHeight: 1 }}>{profile.completedBreaks}</div>
-                </div>
-                <div className="panel-side" style={{ marginBottom: 0 }}>
-                    <div className="text-muted fw-medium" style={{ fontSize: '14px', marginBottom: '8px' }}>Пропущенные перерывы</div>
-                    <div className="tabular-nums fw-bold text-red" style={{ fontSize: '40px', lineHeight: 1 }}>{profile.skippedBreaks}</div>
-                </div>
-            </div>
+  return (
+    <div className="max-w-md mx-auto space-y-6">
+      <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-600">
+            {user.userName[0]?.toUpperCase()}
+          </div>
+          <div>
+            <p className="font-bold text-gray-900 text-lg">{user.userName}</p>
+            <span className="text-xs font-bold text-green-600">{user.role}</span>
+          </div>
         </div>
-    );
-};
+        <div>
+          <label className="block text-sm font-medium text-gray-500 mb-1.5">Name</label>
+          <input value={name} onChange={e => setName(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-gray-900 outline-none transition" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-500 mb-1.5">Login</label>
+          <input value={user.login} disabled
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-100 bg-gray-50 text-sm text-gray-400 cursor-not-allowed" />
+        </div>
+        <button onClick={save} disabled={saving}
+          className="w-full py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition disabled:opacity-50">
+          {saved ? "Saved!" : saving ? "..." : "Save"}
+        </button>
+      </div>
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <h3 className="font-bold text-gray-900 mb-4">Stats</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {[
+            { l: "Shifts", v: user.totalShifts },
+            { l: "Breaks", v: user.totalBreaks },
+            { l: "Completed", v: user.completedBreaks },
+            { l: "Skipped", v: user.skippedBreaks },
+          ].map(s => (
+            <div key={s.l} className="text-center py-3 rounded-xl bg-gray-50">
+              <p className="text-2xl font-bold text-gray-900 tabular-nums">{s.v}</p>
+              <p className="text-xs text-gray-400 mt-1">{s.l}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+﻿import axios, { AxiosInstance, AxiosError } from 'axios';
 
 const API_BASE = 'https://localhost:7059/api';
 
@@ -10,7 +10,7 @@ let axiosInstance: AxiosInstance = axios.create({
     withCredentials: true
 });
 
-// Interceptor для добавления токена
+// Interceptor РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ С‚РѕРєРµРЅР°
 axiosInstance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -22,7 +22,7 @@ axiosInstance.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Interceptor для обработки ошибок
+// Interceptor РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РѕС€РёР±РѕРє
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {

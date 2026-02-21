@@ -1,4 +1,4 @@
-export interface AdminUserDto {
+п»їexport interface AdminUserDto {
     id: number;
     userName: string;
     login: string;
@@ -45,7 +45,7 @@ export interface UpdateUserAdminDto {
     role?: string;
 }
 
-// Пулы перерывов - используем СУЩЕСТВУЮЩИЙ DTO
+// РџСѓР»С‹ РїРµСЂРµСЂС‹РІРѕРІ - РёСЃРїРѕР»СЊР·СѓРµРј РЎРЈР©Р•РЎРўР’РЈР®Р©РР™ DTO
 export interface BreakPoolDayDto {
     id: number;
     group: number;
@@ -61,7 +61,7 @@ export interface CreateBreakPoolDayDto {
     maxCurrentBreaks: number;
 }
 
-// Расписания
+// Р Р°СЃРїРёСЃР°РЅРёСЏ
 export interface Schedule {
     id: number;
     name: string;

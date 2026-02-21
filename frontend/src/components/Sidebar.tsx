@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface NavItem {
@@ -8,10 +8,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-    { label: 'Дашборд', path: '/dashboard', icon: '📊' },
-    { label: 'Перерывы', path: '/breaks', icon: '☕' },
-    { label: 'Расписание', path: '/schedule', icon: '📅' },
-    { label: 'Профиль', path: '/profile', icon: '👤' },
+    { label: 'Р”Р°С€Р±РѕСЂРґ', path: '/dashboard', icon: 'рџ“Љ' },
+    { label: 'РџРµСЂРµСЂС‹РІС‹', path: '/breaks', icon: 'в•' },
+    { label: 'Р Р°СЃРїРёСЃР°РЅРёРµ', path: '/schedule', icon: 'рџ“…' },
+    { label: 'РџСЂРѕС„РёР»СЊ', path: '/profile', icon: 'рџ‘¤' },
 ];
 
 export const Sidebar: React.FC = () => {
@@ -20,7 +20,7 @@ export const Sidebar: React.FC = () => {
 
     return (
         <div className="sidebar">
-            <div className="nav-logo">📋 Skntbreak</div>
+            <div className="nav-logo">рџ“‹ Skntbreak</div>
             <nav className="nav-items">
                 {navItems.map((item) => (
                     <div

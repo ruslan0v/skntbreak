@@ -1,26 +1,26 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { api } from '../api/client';
 
 export const Header: React.FC = () => {
     const navigate = useNavigate();
-    const [time, setTime] = useState(new Date()); // ✅
+    const [time, setTime] = useState(new Date()); // вњ…
     const [profile, setProfile] = useState<{ userName: string, role: string } | null>(null);
 
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
         return () => clearInterval(timer);
-    }, []); // ✅
+    }, []); // вњ…
 
     useEffect(() => {
         api.Users.getProfile()
             .then(res => setProfile(res.data))
-            .catch(() => console.error("Не удалось загрузить профиль"));
-    }, []); // ✅
+            .catch(() => console.error("РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РїСЂРѕС„РёР»СЊ"));
+    }, []); // вњ…
 
-    const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
-    const dayName = days[time.getDay()]; // ✅
+    const days = ['Р’РѕСЃРєСЂРµСЃРµРЅСЊРµ', 'РџРѕРЅРµРґРµР»СЊРЅРёРє', 'Р’С‚РѕСЂРЅРёРє', 'РЎСЂРµРґР°', 'Р§РµС‚РІРµСЂРі', 'РџСЏС‚РЅРёС†Р°', 'РЎСѓР±Р±РѕС‚Р°'];
+    const dayName = days[time.getDay()]; // вњ…
 
     const formatTime = (date: Date) => {
         return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -35,7 +35,7 @@ export const Header: React.FC = () => {
             <div className="header-profile">
                 <div className="profile-info">
                     <span style={{ color: '#111827', fontSize: '16px' }}>
-                        {profile?.userName || 'Загрузка...'}
+                        {profile?.userName || 'Р—Р°РіСЂСѓР·РєР°...'}
                     </span>
                     <span className="profile-role">
                         {profile?.role === 'SL2' ? 'SL2' : profile?.role || ''}
@@ -53,7 +53,7 @@ export const Header: React.FC = () => {
                         navigate('/login');
                     }}
                 >
-                    Выход
+                    Р’С‹С…РѕРґ
                 </button>
             </div>
         </div>
